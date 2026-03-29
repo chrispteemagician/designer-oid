@@ -1,0 +1,2189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Designer-Oid | The Authentication Atelier</title>
+    <meta name="description" content="Designer-Oid: AI-powered fashion authentication. Bags, shoes, labels checked by Monsieur Stitch. Free forever. Part of the FeelFamous -Oid family.">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Caveat:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        deep: '#0a0a0a',
+                        mid: '#1a1a1a',
+                        rose: '#e8b4b8',
+                        gold: '#d4a574',
+                        cream: '#f5f5f5',
+                        roseDark: '#c49599',
+                        goldDark: '#b8906a',
+                        surface: '#141414',
+                        surfaceLight: '#1e1e1e',
+                    },
+                    fontFamily: {
+                        outfit: ['Outfit', 'sans-serif'],
+                        caveat: ['Caveat', 'cursive'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        * { box-sizing: border-box; }
+        .hidden { display: none !important; }
+        [data-tw-portal] { display: none !important; }
+        html {
+            scroll-snap-type: y proximity;
+            scroll-behavior: smooth;
+            font-size: 18px;
+        }
+        body {
+            font-family: 'Outfit', sans-serif;
+            margin: 0;
+            padding: 0;
+            background: #0a0a0a;
+            color: #f5f5f5;
+            -webkit-font-smoothing: antialiased;
+        }
+        .snap-section {
+            scroll-snap-align: start;
+            min-height: 100vh;
+            min-height: 100dvh;
+        }
+        .section-reveal {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: opacity 0.7s ease-out, transform 0.7s ease-out;
+        }
+        .section-reveal.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Navigation */
+        .nav-pill {
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 100;
+            background: rgba(26, 26, 26, 0.95);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(232, 180, 184, 0.2);
+            border-radius: 9999px;
+            padding: 8px 12px;
+            display: flex;
+            gap: 4px;
+        }
+        .nav-dot {
+            width: 48px;
+            height: 48px;
+            border-radius: 9999px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: transparent;
+            border: none;
+            color: #f5f5f5;
+        }
+        .nav-dot:hover { background: rgba(232, 180, 184, 0.15); }
+        .nav-dot.active { background: rgba(232, 180, 184, 0.25); }
+
+        /* Upload boxes */
+        .upload-box {
+            background: #141414;
+            border: 2px dashed rgba(232, 180, 184, 0.3);
+            border-radius: 16px;
+            padding: 48px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            min-height: 48px;
+        }
+        .upload-box:hover {
+            background: #1e1e1e;
+            border-color: #e8b4b8;
+            box-shadow: 0 0 30px rgba(232, 180, 184, 0.1);
+        }
+
+        /* Buttons */
+        .btn-rose {
+            background: linear-gradient(135deg, #e8b4b8, #c49599);
+            color: #0a0a0a;
+            font-weight: 700;
+            padding: 14px 28px;
+            border-radius: 12px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-family: 'Outfit', sans-serif;
+            font-size: 0.9rem;
+            min-height: 48px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .btn-rose:hover { transform: translateY(-1px); box-shadow: 0 8px 25px rgba(232, 180, 184, 0.3); }
+        .btn-gold {
+            background: linear-gradient(135deg, #d4a574, #b8906a);
+            color: #0a0a0a;
+            font-weight: 700;
+            padding: 14px 28px;
+            border-radius: 12px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-family: 'Outfit', sans-serif;
+            font-size: 0.9rem;
+            min-height: 48px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .btn-gold:hover { transform: translateY(-1px); box-shadow: 0 8px 25px rgba(212, 165, 116, 0.3); }
+        .btn-outline {
+            background: transparent;
+            border: 2px solid rgba(232, 180, 184, 0.4);
+            color: #e8b4b8;
+            font-weight: 600;
+            padding: 12px 24px;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-family: 'Outfit', sans-serif;
+            font-size: 0.9rem;
+            min-height: 48px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .btn-outline:hover { border-color: #e8b4b8; background: rgba(232, 180, 184, 0.1); }
+
+        .amazon-btn {
+            background: #ff9900;
+            color: #111;
+            padding: 14px 24px;
+            border-radius: 12px;
+            font-weight: 700;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s;
+            min-height: 48px;
+            font-size: 0.9rem;
+        }
+        .amazon-btn:hover { background: #ffad33; transform: translateY(-1px); }
+
+        /* Cards */
+        .glass-card {
+            background: rgba(26, 26, 26, 0.8);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(232, 180, 184, 0.12);
+            border-radius: 20px;
+            padding: 28px;
+        }
+        .glass-card-gold {
+            background: rgba(26, 26, 26, 0.8);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(212, 165, 116, 0.2);
+            border-radius: 20px;
+            padding: 28px;
+        }
+
+        /* Tabs */
+        .tab-btn {
+            flex: 1;
+            padding: 16px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: transparent;
+            color: rgba(245, 245, 245, 0.5);
+            border-bottom: 3px solid transparent;
+            font-family: 'Outfit', sans-serif;
+            min-height: 48px;
+        }
+        .tab-btn.active {
+            color: #e8b4b8;
+            border-bottom-color: #e8b4b8;
+            background: rgba(232, 180, 184, 0.05);
+        }
+        .tab-btn:hover:not(.active) { color: rgba(245, 245, 245, 0.7); }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        /* Q&A */
+        .qa-item {
+            border-bottom: 1px solid rgba(232, 180, 184, 0.1);
+            padding: 20px 0;
+            cursor: pointer;
+        }
+        .qa-item:last-child { border-bottom: none; }
+        .qa-answer {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s ease-out, padding 0.3s;
+            padding: 0;
+        }
+        .qa-answer.open {
+            max-height: 500px;
+            padding-top: 12px;
+        }
+
+        /* Chat */
+        .chat-container {
+            background: #141414;
+            border: 1px solid rgba(232, 180, 184, 0.15);
+            border-radius: 20px;
+            overflow: hidden;
+        }
+        .chat-messages {
+            height: 400px;
+            overflow-y: auto;
+            padding: 20px;
+            scroll-behavior: smooth;
+        }
+        .chat-messages::-webkit-scrollbar { width: 6px; }
+        .chat-messages::-webkit-scrollbar-thumb { background: rgba(232, 180, 184, 0.3); border-radius: 3px; }
+        .chat-bubble-user {
+            background: linear-gradient(135deg, #e8b4b8, #c49599);
+            color: #0a0a0a;
+            border-radius: 18px 18px 4px 18px;
+            padding: 14px 18px;
+            max-width: 80%;
+            margin-left: auto;
+            margin-bottom: 12px;
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+        .chat-bubble-bot {
+            background: #1e1e1e;
+            border: 1px solid rgba(232, 180, 184, 0.1);
+            color: #f5f5f5;
+            border-radius: 18px 18px 18px 4px;
+            padding: 14px 18px;
+            max-width: 85%;
+            margin-bottom: 12px;
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+        .chat-input-area {
+            display: flex;
+            gap: 10px;
+            padding: 16px 20px;
+            background: #1a1a1a;
+            border-top: 1px solid rgba(232, 180, 184, 0.1);
+        }
+        .chat-input {
+            flex: 1;
+            background: #0a0a0a;
+            border: 1px solid rgba(232, 180, 184, 0.2);
+            border-radius: 12px;
+            padding: 14px 18px;
+            color: #f5f5f5;
+            font-family: 'Outfit', sans-serif;
+            font-size: 0.95rem;
+            outline: none;
+            min-height: 48px;
+        }
+        .chat-input:focus { border-color: #e8b4b8; }
+        .chat-input::placeholder { color: rgba(245, 245, 245, 0.3); }
+
+        /* Village grid */
+        .village-tile {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: #141414;
+            border: 1px solid rgba(232, 180, 184, 0.1);
+            border-radius: 16px;
+            padding: 20px 12px;
+            text-decoration: none;
+            color: #f5f5f5;
+            transition: all 0.3s;
+            min-height: 48px;
+        }
+        .village-tile:hover {
+            border-color: #e8b4b8;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(232, 180, 184, 0.1);
+        }
+        .village-tile.current {
+            background: linear-gradient(135deg, rgba(232, 180, 184, 0.15), rgba(212, 165, 116, 0.1));
+            border-color: #e8b4b8;
+        }
+
+        /* Tier cards */
+        .tier-card {
+            background: #141414;
+            border: 1px solid rgba(232, 180, 184, 0.15);
+            border-radius: 20px;
+            padding: 28px;
+            text-align: center;
+            transition: all 0.3s;
+        }
+        .tier-card:hover {
+            border-color: #e8b4b8;
+            transform: translateY(-2px);
+        }
+        .tier-card.featured {
+            border-color: #d4a574;
+            background: linear-gradient(135deg, #141414, rgba(212, 165, 116, 0.08));
+        }
+
+        /* Decorative line */
+        .rose-line {
+            width: 60px;
+            height: 3px;
+            background: linear-gradient(90deg, #e8b4b8, #d4a574);
+            border-radius: 2px;
+            margin: 12px auto;
+        }
+
+        /* Shimmer animation for loading */
+        @keyframes shimmer {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .loading-spin { animation: shimmer 2s linear infinite; }
+
+        /* Subtle pulse for hero emoji */
+        @keyframes gentlePulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        .hero-emoji { animation: gentlePulse 3s ease-in-out infinite; }
+
+        /* Scrollbar styling */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #0a0a0a; }
+        ::-webkit-scrollbar-thumb { background: rgba(232, 180, 184, 0.2); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(232, 180, 184, 0.3); }
+
+        /* Kill Tailwind CDN dev overlay */
+        body > div[style*="2147483646"], body > div[style*="2147483647"] { display: none !important; pointer-events: none !important; }
+
+        /* Use case selector buttons */
+        .usecase-btn {
+            padding: 12px 8px;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(232, 180, 184, 0.15);
+            border-radius: 12px;
+            color: rgba(245,245,245,0.6);
+            cursor: pointer;
+            transition: all 0.2s;
+            min-height: 72px;
+        }
+        .usecase-btn:hover { border-color: rgba(232, 180, 184, 0.4); color: #f5f5f5; }
+        .usecase-btn.active { border-color: #e8b4b8; background: rgba(232,180,184,0.1); color: #f5f5f5; }
+
+        /* w3w suggestion dropdown */
+        .w3w-suggestion {
+            padding: 12px 16px;
+            cursor: pointer;
+            border-bottom: 1px solid rgba(232,180,184,0.1);
+            transition: background 0.15s;
+        }
+        .w3w-suggestion:last-child { border-bottom: none; }
+        .w3w-suggestion:hover { background: rgba(232,180,184,0.08); }
+
+        /* Mobile adjustments */
+        @media (max-width: 640px) {
+            html { font-size: 16px; }
+            .nav-pill { bottom: 12px; padding: 6px 8px; }
+            .nav-dot { width: 40px; height: 40px; font-size: 0.95rem; }
+            .chat-messages { height: 320px; }
+            .snap-section { min-height: auto; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ==================== AGE VERIFICATION ==================== -->
+<div id="ageModal" class="hidden fixed inset-0 bg-black/90 flex items-center justify-center z-[200] p-4">
+    <div class="glass-card max-w-md w-full text-center">
+        <div class="text-5xl mb-4">👗</div>
+        <h2 class="text-2xl font-bold text-cream mb-2">Welcome to Designer-Oid</h2>
+        <p class="text-cream/60 text-sm mb-6">The Authentication Atelier. An adult-focused educational community. Kids welcome with parent permission.</p>
+        <div class="space-y-3">
+            <button onclick="confirmAge('adult')" class="w-full btn-rose text-base">I'm 18+ (Enter the Atelier)</button>
+            <button onclick="confirmAge('parent')" class="w-full btn-outline text-base">I'm a Parent / Guardian</button>
+            <button onclick="confirmAge('under18')" class="w-full btn-outline text-base">I'm Under 18 (Need Parent OK)</button>
+        </div>
+        <p class="text-xs text-cream/30 mt-6">Safe space for skill-sharing across generations. No social media nonsense. Just real humans helping real humans.</p>
+    </div>
+</div>
+
+<!-- ==================== NAVIGATION PILL ==================== -->
+<nav class="nav-pill" id="navPill">
+    <button class="nav-dot active" onclick="goTo('pageHome')" title="Home">👗</button>
+    <button class="nav-dot" onclick="goTo('pageLearn')" title="Learn">📖</button>
+    <button class="nav-dot" onclick="goTo('pageQA')" title="Q&A">💎</button>
+    <button class="nav-dot" onclick="goTo('pageStitch')" title="Ask Monsieur Stitch">💬</button>
+    <button class="nav-dot" onclick="goTo('pageGear')" title="Gear">🛍️</button>
+    <button class="nav-dot" onclick="goTo('pageMeet')" title="Meeting Point">📍</button>
+    <button class="nav-dot" onclick="goTo('pageVillage')" title="Village">🏘️</button>
+</nav>
+
+<!-- ==================== USER STATUS BAR ==================== -->
+<div id="userStatusBar" class="hidden fixed top-0 left-0 right-0 z-[150] bg-gradient-to-r from-rose/90 to-gold/90 backdrop-blur-sm text-deep py-2 px-4">
+    <div class="max-w-3xl mx-auto flex items-center justify-between text-sm font-semibold">
+        <div><span id="userBadge"></span> <span id="userName"></span> &mdash; <span id="userKudos">0</span> Kudos</div>
+        <button onclick="signOut()" class="text-xs underline opacity-70 hover:opacity-100">Sign out</button>
+    </div>
+</div>
+
+<!-- ==================== SECTION 1: HERO + AI IDENTIFIER ==================== -->
+<section id="pageHome" class="snap-section relative overflow-hidden">
+    <!-- Hero -->
+    <div class="relative py-16 px-4 text-center" style="background: linear-gradient(180deg, #0a0a0a 0%, #141414 100%);">
+        <div class="hero-emoji text-7xl mb-4">👗</div>
+        <h1 class="text-5xl sm:text-6xl font-black tracking-tight text-cream mb-2" style="line-height:1.1;">Designer-Oid</h1>
+        <div class="rose-line"></div>
+        <p class="text-lg font-semibold text-rose tracking-widest uppercase mt-3">The Authentication Atelier</p>
+        <p class="font-caveat text-2xl text-gold/80 mt-2">"Every stitch tells a story"</p>
+    </div>
+
+    <!-- Welcome from Monsieur Stitch -->
+    <div class="px-4 pb-6" style="background: #141414;">
+        <div class="max-w-3xl mx-auto glass-card">
+            <h2 class="text-xl font-bold text-rose mb-3">Bonjour, mon ami! Monsieur Stitch here.</h2>
+            <p class="text-cream/70 text-[0.95rem] mb-3 leading-relaxed">
+                Twenty years in luxury retail &mdash; Harrods, Selfridges, the Knightsbridge circuit &mdash; and thousands of authentications later, I can spot a counterfeit before most people notice it's a handbag. French-born, London-raised, and I've handled more Birkins than a Paris auction house.
+            </p>
+            <p class="text-cream/70 text-[0.95rem] leading-relaxed">
+                Whether you've found a treasure in a charity shop or want to check something before you buy, I am here. Snap a photo of the item, the label, the stitching, the hardware &mdash; and I'll tell you what I really think. Or hit the <strong class="text-rose">Roast</strong> tab and prepare for some brutal Parisian honesty about your wardrobe choices.
+            </p>
+        </div>
+    </div>
+
+    <!-- Free to use banner -->
+    <div class="text-center py-3 px-4 border-y border-rose/10" style="background: rgba(232, 180, 184, 0.03);">
+        <p class="text-sm text-cream/70">
+            <strong class="text-cream">Free forever.</strong> Join the <a href="https://feelfamous.com" class="text-rose font-bold hover:underline">FeelFamous Family</a> to unlock <span class="bg-gold text-deep px-2 py-0.5 rounded font-bold text-xs">PRO</span> features across <strong class="text-cream">ALL</strong> -Oid apps.
+        </p>
+    </div>
+
+    <!-- Action buttons -->
+    <div class="py-4 px-4" style="background: #141414;">
+        <div class="max-w-3xl mx-auto flex flex-wrap gap-3 justify-center">
+            <a href="https://feelfamous.com/founders.html" class="btn-rose text-sm">Join The Village</a>
+            <a href="mailto:chris@chrisptee.co.uk" class="btn-outline text-sm">Email</a>
+            <a href="https://wa.me/447976884254" class="btn-outline text-sm" style="border-color: rgba(74,222,128,0.4); color: #4ade80;">WhatsApp</a>
+            <a href="https://www.patreon.com/chrisptee" target="_blank" class="btn-gold text-sm">Join on Patreon</a>
+        </div>
+    </div>
+
+    <!-- Tabs: Authenticate / Roast My Fit -->
+    <div class="border-y border-rose/10" style="background: #0a0a0a;">
+        <div class="max-w-3xl mx-auto flex">
+            <button id="tabAuthenticate" class="tab-btn active" onclick="switchMainTab('authenticate')">Authenticate</button>
+            <button id="tabRoast" class="tab-btn" onclick="switchMainTab('roast')">Roast My Fit</button>
+        </div>
+    </div>
+
+    <!-- Main Content Area -->
+    <div class="max-w-3xl mx-auto px-4 py-8" style="background: #0a0a0a;">
+
+        <!-- AUTHENTICATE VIEW -->
+        <div id="authenticateView">
+            <h2 class="text-2xl font-bold text-center text-cream mb-6">Authenticate &middot; Identify &middot; Value</h2>
+            <div class="grid grid-cols-2 gap-4 mb-6">
+                <div class="upload-box" onclick="document.getElementById('cameraInput').click()">
+                    <div class="text-5xl mb-3">📷</div>
+                    <p class="font-bold text-cream text-sm">Camera</p>
+                    <p class="text-cream/40 text-xs mt-1">Take a photo</p>
+                </div>
+                <div class="upload-box" onclick="document.getElementById('galleryInput').click()">
+                    <div class="text-5xl mb-3">🖼️</div>
+                    <p class="font-bold text-cream text-sm">Gallery</p>
+                    <p class="text-cream/40 text-xs mt-1">Choose a photo</p>
+                </div>
+            </div>
+            <p class="text-center text-cream/40 text-sm mb-8">Real designer or fake? Show me the label, the stitching, the hardware. I'll know, darling.</p>
+            <input type="file" id="cameraInput" accept="image/*" capture="environment" class="hidden" onchange="handleUpload('identify', this)">
+            <input type="file" id="galleryInput" accept="image/*" class="hidden" onchange="handleUpload('identify', this)">
+
+            <!-- Village Broadcast -->
+            <div id="broadcastSection" class="hidden mb-6">
+                <div class="glass-card overflow-hidden" style="padding:0;">
+                    <div id="emergencyBanner" class="hidden bg-red-600 text-white text-center py-2 font-bold text-sm">EMERGENCY BROADCAST</div>
+                    <div class="p-4">
+                        <p class="font-bold text-sm mb-3 text-rose/70" id="broadcastTitle">Village Broadcast</p>
+                        <div class="relative" style="padding-bottom: 177.78%; height: 0; overflow: hidden; border-radius: 12px;">
+                            <iframe id="broadcastVideo" src="" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none;" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Did You Know -->
+            <div class="glass-card mb-6">
+                <h3 class="font-bold text-rose mb-3">Monsieur Stitch's Authentication Facts</h3>
+                <ul class="text-sm text-cream/60 space-y-2">
+                    <li>&#8211; A vintage Hermes Birkin sold for over 300,000 pounds at auction</li>
+                    <li>&#8211; Real Chanel uses exactly 11 stitches per inch on quilted bags</li>
+                    <li>&#8211; Louis Vuitton never goes on sale. Ever. If it's "on sale," it's fake</li>
+                    <li>&#8211; The counterfeit fashion industry is worth over 450 billion dollars annually</li>
+                </ul>
+            </div>
+
+            <!-- Quick Gear Links -->
+            <div class="glass-card-gold mb-6">
+                <h3 class="font-bold text-gold mb-3">Authentication Essentials</h3>
+                <p class="text-sm text-cream/50 mb-4">Tools every fashion hunter needs (affiliate links support the village):</p>
+                <div class="flex flex-wrap gap-2">
+                    <a href="https://www.amazon.co.uk/s?k=uv+light+authentication&tag=chrisptee-21" target="_blank" class="bg-gold/10 hover:bg-gold/20 text-gold px-3 py-2 rounded-full text-sm font-medium transition min-h-[48px] inline-flex items-center">UV Lights</a>
+                    <a href="https://www.amazon.co.uk/s?k=jewellers+loupe+magnifier&tag=chrisptee-21" target="_blank" class="bg-gold/10 hover:bg-gold/20 text-gold px-3 py-2 rounded-full text-sm font-medium transition min-h-[48px] inline-flex items-center">Magnifiers</a>
+                    <a href="https://www.amazon.co.uk/s?k=garment+steamer&tag=chrisptee-21" target="_blank" class="bg-gold/10 hover:bg-gold/20 text-gold px-3 py-2 rounded-full text-sm font-medium transition min-h-[48px] inline-flex items-center">Steamers</a>
+                    <a href="https://www.amazon.co.uk/s?k=cashmere+comb&tag=chrisptee-21" target="_blank" class="bg-gold/10 hover:bg-gold/20 text-gold px-3 py-2 rounded-full text-sm font-medium transition min-h-[48px] inline-flex items-center">Cashmere Combs</a>
+                    <a href="https://www.amazon.co.uk/s?k=velvet+hangers&tag=chrisptee-21" target="_blank" class="bg-gold/10 hover:bg-gold/20 text-gold px-3 py-2 rounded-full text-sm font-medium transition min-h-[48px] inline-flex items-center">Velvet Hangers</a>
+                </div>
+            </div>
+
+            <!-- Quote -->
+            <div class="glass-card text-center mb-6">
+                <p class="text-cream/80 italic text-lg mb-2 font-caveat text-2xl">"Fashion fades, only style remains the same."</p>
+                <p class="text-cream/40 text-sm">&#8211; Coco Chanel</p>
+            </div>
+
+            <!-- Recent Activity -->
+            <div class="glass-card">
+                <h3 class="font-bold text-cream mb-4">Recent Villagers</h3>
+                <div id="activityList" class="space-y-2 text-sm text-cream/50">
+                    <p class="text-center text-cream/30">Loading...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ROAST VIEW -->
+        <div id="roastView" class="hidden">
+            <h2 class="text-2xl font-bold text-center text-cream mb-6">Roast My Fit</h2>
+            <div class="glass-card mb-6">
+                <p class="text-cream/70 text-sm leading-relaxed">Monsieur Stitch has dressed film stars, authenticated for auction houses, and he has had it up to HERE with polyester pretending to be silk. He's been to every vintage fair from Paris to Portobello, and he can smell a fake from across the room. Show him your outfit and prepare for brutal honesty. In French.</p>
+            </div>
+            <div class="grid grid-cols-2 gap-4 mb-6">
+                <div class="upload-box" onclick="document.getElementById('roastCamera').click()">
+                    <div class="text-5xl mb-3">📷</div>
+                    <p class="font-bold text-cream text-sm">Camera</p>
+                </div>
+                <div class="upload-box" onclick="document.getElementById('roastGallery').click()">
+                    <div class="text-5xl mb-3">🖼️</div>
+                    <p class="font-bold text-cream text-sm">Gallery</p>
+                </div>
+            </div>
+            <p class="text-center text-cream/40 text-sm">Show off your style or get roasted. Check your labels, darling.</p>
+            <input type="file" id="roastCamera" accept="image/*" capture="environment" class="hidden" onchange="handleUpload('roast', this)">
+            <input type="file" id="roastGallery" accept="image/*" class="hidden" onchange="handleUpload('roast', this)">
+        </div>
+
+        <!-- LOADING VIEW -->
+        <div id="loadingView" class="hidden text-center py-16">
+            <div class="loading-spin text-6xl mb-6 inline-block">👗</div>
+            <p id="loadingStatus" class="text-2xl font-bold text-rose">Checking the label...</p>
+            <p id="loadingMessage" class="text-cream/50 mt-3">Monsieur Stitch is examining the stitching...</p>
+            <p id="loadingTimer" class="text-cream/30 text-sm mt-4">0 seconds</p>
+            <p id="patienceMessage" class="text-rose/50 text-sm mt-2 hidden">Taking longer than usual... Monsieur Stitch is being very thorough, darling.</p>
+        </div>
+
+        <!-- RESULT VIEW -->
+        <div id="resultView" class="hidden">
+            <div class="rounded-3xl p-8 text-cream shadow-2xl mb-6" style="background: linear-gradient(135deg, #1a1a1a 0%, #0a0a0a 100%); border: 1px solid rgba(232, 180, 184, 0.2);">
+                <img id="resultImage" src="" alt="Analysed item" class="w-full rounded-xl mb-6 shadow-xl">
+                <h3 id="resultTitle" class="text-2xl font-extrabold mb-3 text-rose"></h3>
+                <div id="resultDescription" class="text-[0.95rem] text-cream/80 leading-relaxed mb-4"></div>
+                <p id="resultPrice" class="text-gold font-bold text-xl hidden"></p>
+                <div id="amazonLink" class="mt-4"></div>
+                <p id="resultAttribution" class="text-sm text-cream/40 mt-4"></p>
+            </div>
+
+            <div class="grid grid-cols-3 gap-3 mb-6">
+                <button onclick="shareResult()" class="btn-outline text-sm py-3">Share</button>
+                <button onclick="downloadResult()" class="btn-gold text-sm py-3">Download</button>
+                <button onclick="resetToHome()" class="btn-rose text-sm py-3">Again</button>
+            </div>
+
+            <!-- Sign in prompt -->
+            <div id="signInPrompt" class="glass-card text-center">
+                <p class="text-cream/80 font-semibold mb-4">Sign in with Patreon to earn kudos, track authentications, and unlock village features!</p>
+                <button id="patreonSignInBtn" onclick="signInWithPatreon()" class="w-full btn-rose" style="min-height:52px; font-size:1.05rem;">Sign in with Patreon</button>
+                <div id="patreonStatus" class="hidden mt-3"></div>
+                <p class="text-xs text-cream/30 mt-3">Secure OAuth. No passwords stored here.</p>
+            </div>
+
+            <!-- Kudos earned -->
+            <div id="kudosEarned" class="hidden glass-card-gold text-center mt-4">
+                <p class="text-2xl font-bold text-gold mb-2">+10 Kudos Earned!</p>
+                <p class="text-sm text-cream/50">Share your QR code to earn even more!</p>
+            </div>
+        </div>
+
+        <!-- LEADERBOARD VIEW -->
+        <div id="leaderboardView" class="hidden">
+            <div class="glass-card">
+                <h2 class="text-2xl font-bold text-cream mb-6 text-center">Kudos Leaderboard</h2>
+                <div id="leaderboardList" class="space-y-3">
+                    <p class="text-center text-cream/30">Loading...</p>
+                </div>
+                <button onclick="switchView('home')" class="w-full mt-6 btn-rose">Back to Atelier</button>
+            </div>
+        </div>
+
+        <!-- QR VIEW -->
+        <div id="qrView" class="hidden">
+            <div class="glass-card text-center">
+                <h2 class="text-2xl font-bold text-cream mb-4">Your Referral QR Code</h2>
+                <img id="qrImage" src="" alt="QR Code" class="w-64 h-64 mx-auto mb-4 rounded-xl shadow-lg bg-white p-2">
+                <p class="text-cream/70 mb-2">Share this to earn <strong class="text-gold">50 kudos</strong> per signup!</p>
+                <p class="text-sm text-cream/40 mb-6">Every person who joins through your code earns you rewards.</p>
+                <button onclick="downloadQR()" class="btn-gold mb-3 w-full">Download QR Code</button>
+                <button onclick="switchView('home')" class="w-full btn-outline">Back to Atelier</button>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ==================== SECTION 2: LEARN ==================== -->
+<section id="pageLearn" class="snap-section py-16 px-4 section-reveal" style="background: linear-gradient(180deg, #0a0a0a 0%, #111 50%, #0a0a0a 100%);">
+    <div class="max-w-3xl mx-auto">
+        <div class="text-center mb-10">
+            <p class="text-4xl mb-2">📖</p>
+            <h2 class="text-3xl font-black text-cream">Learn to Authenticate</h2>
+            <div class="rose-line"></div>
+            <p class="text-cream/50 mt-3">What to look for. What to avoid. What the professionals check.</p>
+        </div>
+
+        <!-- Learn Tabs -->
+        <div class="flex border-b border-rose/10 mb-8">
+            <button class="tab-btn active" onclick="switchLearnTab('bags', this)">👜 Bags</button>
+            <button class="tab-btn" onclick="switchLearnTab('shoes', this)">👠 Shoes</button>
+            <button class="tab-btn" onclick="switchLearnTab('labels', this)">🏷️ Labels</button>
+        </div>
+
+        <!-- BAGS TAB -->
+        <div id="learnBags" class="tab-content active">
+            <div class="space-y-6">
+                <div class="glass-card">
+                    <h3 class="font-bold text-rose text-lg mb-3">👜 Handbag Authentication 101</h3>
+                    <p class="text-cream/70 text-[0.95rem] leading-relaxed mb-4">The handbag market is the most counterfeited sector in luxury fashion. Here is what professionals check:</p>
+                    <div class="space-y-4">
+                        <div>
+                            <h4 class="font-semibold text-gold mb-1">Stitching</h4>
+                            <p class="text-cream/60 text-sm">Count the stitches per inch. Luxury houses use exact stitch counts &mdash; Chanel uses 11 stitches per inch on quilted bags. Every stitch should be perfectly even, with no loose threads. The thread colour should be consistent throughout.</p>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold text-gold mb-1">Hardware</h4>
+                            <p class="text-cream/60 text-sm">Real luxury hardware is heavy, solid, and precisely engraved. Check for consistent colour (no peeling), clean engravings (not painted), and smooth zipper action. Cheap hardware is the fastest way to spot a fake.</p>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold text-gold mb-1">Leather Quality</h4>
+                            <p class="text-cream/60 text-sm">Real leather has an organic smell, visible grain variations, and ages beautifully. Faux leather smells chemical, has a uniform texture, and peels or cracks over time. High-quality leather should feel warm to the touch, not plasticky.</p>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold text-gold mb-1">Date Codes & Serial Numbers</h4>
+                            <p class="text-cream/60 text-sm">Louis Vuitton uses date codes (location + date). Chanel uses serial number stickers with matching card. Hermes stamps year letters inside. Learn the system for your brand &mdash; fakes often get the format wrong.</p>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold text-gold mb-1">Lining & Interior</h4>
+                            <p class="text-cream/60 text-sm">The inside of a luxury bag is finished as meticulously as the outside. Check for clean edges, quality lining material, and brand-appropriate interior stamps. Sloppy interior work is a dead giveaway.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="glass-card-gold">
+                    <p class="font-caveat text-xl text-gold mb-2">"The stitching never lies, mon ami."</p>
+                    <p class="text-cream/50 text-sm">&#8211; Monsieur Stitch</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- SHOES TAB -->
+        <div id="learnShoes" class="tab-content">
+            <div class="space-y-6">
+                <div class="glass-card">
+                    <h3 class="font-bold text-rose text-lg mb-3">👠 Shoe Authentication Guide</h3>
+                    <p class="text-cream/70 text-[0.95rem] leading-relaxed mb-4">Designer shoes are heavily counterfeited, especially Louboutins, Jordans, and Balenciaga trainers. Here is what to check:</p>
+                    <div class="space-y-4">
+                        <div>
+                            <h4 class="font-semibold text-gold mb-1">Sole Quality</h4>
+                            <p class="text-cream/60 text-sm">Check the sole markings, font consistency, and material quality. Louboutin red soles have a specific shade and finish. Nike soles have precise mould lines. Fake soles often feel cheaper and have blurry text.</p>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold text-gold mb-1">Size Labels</h4>
+                            <p class="text-cream/60 text-sm">Interior size labels should have clean printing, correct font, and accurate sizing across EU/UK/US standards. Check the label placement &mdash; each brand puts it in a specific location. Misaligned or crooked labels are red flags.</p>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold text-gold mb-1">Construction Method</h4>
+                            <p class="text-cream/60 text-sm">Blake stitching, Goodyear welt, cemented &mdash; luxury shoes use specific construction for each model. The join between upper and sole should be seamless. Excess glue is the mark of a fake.</p>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold text-gold mb-1">Box & Packaging</h4>
+                            <p class="text-cream/60 text-sm">Real boxes have precise printing, correct weight, and brand-specific details (tissue paper, dust bags, extra laces). The box alone can confirm or deny authenticity. Keep everything.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="glass-card-gold">
+                    <p class="font-caveat text-xl text-gold mb-2">"If the sole is wrong, the whole story is wrong."</p>
+                    <p class="text-cream/50 text-sm">&#8211; Monsieur Stitch</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- LABELS TAB -->
+        <div id="learnLabels" class="tab-content">
+            <div class="space-y-6">
+                <div class="glass-card">
+                    <h3 class="font-bold text-rose text-lg mb-3">🏷️ Reading Labels Like a Pro</h3>
+                    <p class="text-cream/70 text-[0.95rem] leading-relaxed mb-4">Labels tell you everything &mdash; if you know how to read them. Here is the professional approach:</p>
+                    <div class="space-y-4">
+                        <div>
+                            <h4 class="font-semibold text-gold mb-1">Font & Typography</h4>
+                            <p class="text-cream/60 text-sm">Every luxury house uses specific fonts, registered trademarks, and precise spacing. Chanel's interlocking CCs have exact proportions. Gucci's double G has specific angles. Compare against known authentic examples &mdash; fakes often get the fonts subtly wrong.</p>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold text-gold mb-1">Care Labels</h4>
+                            <p class="text-cream/60 text-sm">Care labels must comply with textile labelling regulations. They should list fibre content accurately, include standard wash symbols, and be sewn in neatly. Spelling errors, wrong symbols, or cheap-feeling labels are immediate red flags.</p>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold text-gold mb-1">Country of Origin</h4>
+                            <p class="text-cream/60 text-sm">"Made in Italy" doesn't guarantee luxury, but it should match the brand's known production locations. Louis Vuitton makes in France, Spain, USA, and Italy. Burberry produces in the UK. If a "Gucci" bag says "Made in China," walk away.</p>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold text-gold mb-1">Label Evolution</h4>
+                            <p class="text-cream/60 text-sm">Labels change over decades. A 1980s YSL label looks different from a 2020s Saint Laurent label. Knowing the evolution of a brand's labels helps date pieces and spot anachronistic fakes. Old label on new hardware? Suspicious.</p>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold text-gold mb-1">Fabric Content</h4>
+                            <p class="text-cream/60 text-sm">Luxury brands use premium materials. 100% merino wool, cashmere, silk, quality cotton. If a "designer" piece is 100% polyester &mdash; question everything. Some modern collections use synthetics, but vintage luxury was almost exclusively natural fibres.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="glass-card-gold">
+                    <p class="font-caveat text-xl text-gold mb-2">"The label is the biography of the garment. Read it carefully."</p>
+                    <p class="text-cream/50 text-sm">&#8211; Monsieur Stitch</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ==================== SECTION 3: Q&A ==================== -->
+<section id="pageQA" class="snap-section py-16 px-4 section-reveal" style="background: #0a0a0a;">
+    <div class="max-w-3xl mx-auto">
+        <div class="text-center mb-10">
+            <p class="text-4xl mb-2">💎</p>
+            <h2 class="text-3xl font-black text-cream">Authentication Q&A</h2>
+            <div class="rose-line"></div>
+            <p class="text-cream/50 mt-3">The questions Monsieur Stitch hears most often at the Atelier.</p>
+        </div>
+
+        <div class="glass-card">
+            <!-- Q1 -->
+            <div class="qa-item" onclick="toggleQA(this)">
+                <h3 class="font-semibold text-rose flex items-center gap-2 text-[0.95rem]">
+                    <span>👜</span> How can I tell if my Louis Vuitton is real?
+                    <span class="ml-auto text-cream/30 text-lg">+</span>
+                </h3>
+                <div class="qa-answer">
+                    <p class="text-cream/60 text-sm leading-relaxed">Check five things: the date code (inside the bag on a leather tab), the stitching (mustard-yellow, perfectly even, identical count on both sides), the monogram pattern (symmetrical, never cut off at seams), the hardware (heavy, solid, branded "LOUIS VUITTON"), and the canvas texture (textured, not smooth and plasticky). Louis Vuitton never goes on sale &mdash; if you bought it at a discount from anywhere other than a resale platform, be suspicious.</p>
+                    <a href="https://www.amazon.co.uk/s?k=louis+vuitton+authentication+guide&tag=chrisptee-21" target="_blank" class="amazon-btn mt-3 text-sm">Search LV Authentication Guides on Amazon</a>
+                </div>
+            </div>
+
+            <!-- Q2 -->
+            <div class="qa-item" onclick="toggleQA(this)">
+                <h3 class="font-semibold text-rose flex items-center gap-2 text-[0.95rem]">
+                    <span>👠</span> Are my trainers fake? How do I check?
+                    <span class="ml-auto text-cream/30 text-lg">+</span>
+                </h3>
+                <div class="qa-answer">
+                    <p class="text-cream/60 text-sm leading-relaxed">For Nike/Jordan: check the size label inside (font, spacing, barcode alignment), the box label (should match the shoe label exactly), the stitching quality, the shape profile (compare against real photos), and the sole. For Balenciaga/Gucci trainers: check the serial number, logo placement, material quality, and the box details. Use a UV light &mdash; some brands have invisible authentication marks.</p>
+                    <a href="https://www.amazon.co.uk/s?k=uv+flashlight+counterfeit&tag=chrisptee-21" target="_blank" class="amazon-btn mt-3 text-sm">UV Authentication Lights on Amazon</a>
+                </div>
+            </div>
+
+            <!-- Q3 -->
+            <div class="qa-item" onclick="toggleQA(this)">
+                <h3 class="font-semibold text-rose flex items-center gap-2 text-[0.95rem]">
+                    <span>🏷️</span> What is the care label telling me?
+                    <span class="ml-auto text-cream/30 text-lg">+</span>
+                </h3>
+                <div class="qa-answer">
+                    <p class="text-cream/60 text-sm leading-relaxed">The care label is a goldmine. It tells you the fabric content (look for natural fibres &mdash; wool, silk, cashmere, cotton), the country of manufacture, and the washing instructions. Luxury items almost never say "100% polyester." If a Chanel jacket has a polyester care label, something is wrong. Also check the label quality itself &mdash; it should be neatly sewn with clean edges and correct international care symbols.</p>
+                </div>
+            </div>
+
+            <!-- Q4 -->
+            <div class="qa-item" onclick="toggleQA(this)">
+                <h3 class="font-semibold text-rose flex items-center gap-2 text-[0.95rem]">
+                    <span>💎</span> I think I've been sold a fake. What do I do?
+                    <span class="ml-auto text-cream/30 text-lg">+</span>
+                </h3>
+                <div class="qa-answer">
+                    <p class="text-cream/60 text-sm leading-relaxed">First: don't panic. It happens to experts too. If you bought online (eBay, Depop, Vinted), open a case immediately &mdash; these platforms have buyer protection for counterfeit goods. Keep ALL documentation &mdash; photos, messages, receipts, the item itself. If you bought in person, report to Trading Standards. Consider getting a professional authentication (Entrupy, Real Authentication) for documented proof. If it was a significant amount, contact your bank about a chargeback. And please &mdash; never feel embarrassed. The fakes are getting better every year.</p>
+                </div>
+            </div>
+
+            <!-- Q5 -->
+            <div class="qa-item" onclick="toggleQA(this)">
+                <h3 class="font-semibold text-rose flex items-center gap-2 text-[0.95rem]">
+                    <span>✨</span> What authentication tools do professionals use?
+                    <span class="ml-auto text-cream/30 text-lg">+</span>
+                </h3>
+                <div class="qa-answer">
+                    <p class="text-cream/60 text-sm leading-relaxed">A good jeweller's loupe (10x-30x magnification) for checking stitching, engravings, and fabric weave. A UV flashlight for checking invisible security features and fluorescence. A precision scale for hardware weight comparison. And most importantly &mdash; thousands of hours of handling real pieces. There's no substitute for experience. Start by visiting brand boutiques and studying authentic items in person.</p>
+                    <a href="https://www.amazon.co.uk/s?k=jewellers+loupe+30x+magnifier&tag=chrisptee-21" target="_blank" class="amazon-btn mt-3 text-sm">Jeweller's Loupes on Amazon</a>
+                </div>
+            </div>
+
+            <!-- Q6 -->
+            <div class="qa-item" onclick="toggleQA(this)">
+                <h3 class="font-semibold text-rose flex items-center gap-2 text-[0.95rem]">
+                    <span>👗</span> Is it worth buying vintage designer?
+                    <span class="ml-auto text-cream/30 text-lg">+</span>
+                </h3>
+                <div class="qa-answer">
+                    <p class="text-cream/60 text-sm leading-relaxed">Absolutely, mon ami. Vintage designer pieces were made when brands used the finest materials &mdash; real leather, pure silk, 100% wool. A 1980s Jaeger coat is often better made than a new one. Vintage Burberry trench coats, YSL blazers, Hermes scarves &mdash; these are investments that hold value. Plus, it's sustainable fashion at its finest. Just always authenticate before you buy, especially at market prices.</p>
+                </div>
+            </div>
+
+            <!-- Q7 -->
+            <div class="qa-item" onclick="toggleQA(this)">
+                <h3 class="font-semibold text-rose flex items-center gap-2 text-[0.95rem]">
+                    <span>👜</span> What's the most faked brand in the world?
+                    <span class="ml-auto text-cream/30 text-lg">+</span>
+                </h3>
+                <div class="qa-answer">
+                    <p class="text-cream/60 text-sm leading-relaxed">Louis Vuitton, by a significant margin. The monogram pattern is iconic but relatively simple to replicate poorly. Chanel is second, followed by Gucci, Rolex, and Nike. The counterfeit industry is not a victimless crime &mdash; it funds organised crime, uses exploitative labour, and damages the livelihood of legitimate businesses. When you buy a fake, you're paying bad people to do bad things. Support real creators &mdash; buy authentic, buy vintage, buy second-hand, but buy real.</p>
+                </div>
+            </div>
+
+            <!-- Q8 -->
+            <div class="qa-item" onclick="toggleQA(this)">
+                <h3 class="font-semibold text-rose flex items-center gap-2 text-[0.95rem]">
+                    <span>🏷️</span> How do I look after designer items to preserve value?
+                    <span class="ml-auto text-cream/30 text-lg">+</span>
+                </h3>
+                <div class="qa-answer">
+                    <p class="text-cream/60 text-sm leading-relaxed">Keep the box, dust bag, receipt, authentication card, and any packaging. Store bags stuffed with acid-free tissue to keep their shape. Keep leather away from direct sunlight and humidity. Use cedar blocks (not mothballs) to protect wool and cashmere. Clean leather with appropriate conditioner once or twice a year. Hang structured jackets on padded hangers, never wire. And never, ever machine wash something labelled dry-clean only.</p>
+                    <a href="https://www.amazon.co.uk/s?k=acid+free+tissue+paper+storage&tag=chrisptee-21" target="_blank" class="amazon-btn mt-3 text-sm">Acid-Free Storage Tissue on Amazon</a>
+                </div>
+            </div>
+
+            <!-- Q9 -->
+            <div class="qa-item" onclick="toggleQA(this)">
+                <h3 class="font-semibold text-rose flex items-center gap-2 text-[0.95rem]">
+                    <span>✨</span> Can AI really authenticate designer goods?
+                    <span class="ml-auto text-cream/30 text-lg">+</span>
+                </h3>
+                <div class="qa-answer">
+                    <p class="text-cream/60 text-sm leading-relaxed">AI is excellent for a first assessment &mdash; checking stitching patterns, logo alignment, label formats, and common red flags. Designer-Oid can give you a strong indication and tell you what to look for. But for high-value items (over a few hundred pounds), I always recommend getting a professional physical authentication as well. Think of us as your first line of defence &mdash; we'll tell you if something looks suspicious, and point you to the experts for final confirmation. Prevention is always cheaper than a refund battle.</p>
+                </div>
+            </div>
+
+            <!-- Q10 -->
+            <div class="qa-item" onclick="toggleQA(this)">
+                <h3 class="font-semibold text-rose flex items-center gap-2 text-[0.95rem]">
+                    <span>👗</span> Where do I find good vintage and pre-loved designer?
+                    <span class="ml-auto text-cream/30 text-lg">+</span>
+                </h3>
+                <div class="qa-answer">
+                    <p class="text-cream/60 text-sm leading-relaxed">In the UK: Vestiaire Collective (authenticated), The RealReal, Vinted (buyer beware &mdash; always authenticate), eBay (use their Authenticity Guarantee programme), Depop, and charity shops in wealthy areas (Oxfam in Kensington is legendary). In person: vintage fairs (Frock Me!, Hammersmith Vintage, Shepton Mallet), auction houses (Bonhams, Christie's for high-end), and consignment stores. Always authenticate before buying at market prices &mdash; that's what I'm here for, darling.</p>
+                    <a href="https://www.amazon.co.uk/s?k=vintage+fashion+guide+book&tag=chrisptee-21" target="_blank" class="amazon-btn mt-3 text-sm">Vintage Fashion Guides on Amazon</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ==================== SECTION 4: CHATBOT ==================== -->
+<section id="pageStitch" class="snap-section py-16 px-4 section-reveal" style="background: linear-gradient(180deg, #0a0a0a 0%, #111 50%, #0a0a0a 100%);">
+    <div class="max-w-3xl mx-auto">
+        <div class="text-center mb-10">
+            <p class="text-4xl mb-2">💬</p>
+            <h2 class="text-3xl font-black text-cream">Ask Monsieur Stitch</h2>
+            <div class="rose-line"></div>
+            <p class="text-cream/50 mt-3">Your personal authentication expert. Ask anything about fashion, fakes, or fabrics.</p>
+        </div>
+
+        <div class="chat-container">
+            <div class="chat-messages" id="chatMessages">
+                <div class="chat-bubble-bot">
+                    Bonjour, mon ami! I am Monsieur Stitch &mdash; 20 years in luxury retail, thousands of authentications. Whether you have found a treasure in a charity shop or want to check something before you buy, I am here. Show me what you have, darling.
+                </div>
+            </div>
+            <div class="chat-input-area">
+                <input type="text" id="chatInput" class="chat-input" placeholder="Ask about authentication, brands, fakes..." onkeypress="if(event.key==='Enter')sendChat()">
+                <button onclick="sendChat()" class="btn-rose px-6" id="chatSendBtn">Send</button>
+            </div>
+        </div>
+
+        <div class="text-center mt-6">
+            <p class="text-cream/30 text-xs">Monsieur Stitch uses AI. For high-value items, always get professional physical authentication.</p>
+        </div>
+    </div>
+</section>
+
+<!-- ==================== SECTION 5: GEAR ==================== -->
+<section id="pageGear" class="snap-section py-16 px-4 section-reveal" style="background: #0a0a0a;">
+    <div class="max-w-3xl mx-auto">
+        <div class="text-center mb-10">
+            <p class="text-4xl mb-2">🛍️</p>
+            <h2 class="text-3xl font-black text-cream">The Atelier Shop</h2>
+            <div class="rose-line"></div>
+            <p class="text-cream/50 mt-3">Tools, books, and essentials recommended by Monsieur Stitch.</p>
+        </div>
+
+        <!-- Authentication Tools -->
+        <div class="glass-card mb-6">
+            <h3 class="font-bold text-rose text-lg mb-4">Authentication Tools</h3>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <a href="https://www.amazon.co.uk/s?k=uv+flashlight+365nm&tag=chrisptee-21" target="_blank" class="amazon-btn justify-center">UV Light (365nm)</a>
+                <a href="https://www.amazon.co.uk/s?k=jewellers+loupe+30x+magnifier&tag=chrisptee-21" target="_blank" class="amazon-btn justify-center">Jeweller's Loupe 30x</a>
+                <a href="https://www.amazon.co.uk/s?k=precision+digital+scale+0.01g&tag=chrisptee-21" target="_blank" class="amazon-btn justify-center">Precision Scale</a>
+                <a href="https://www.amazon.co.uk/s?k=magnifying+glass+with+light&tag=chrisptee-21" target="_blank" class="amazon-btn justify-center">Illuminated Magnifier</a>
+            </div>
+        </div>
+
+        <!-- Fashion Books -->
+        <div class="glass-card mb-6">
+            <h3 class="font-bold text-rose text-lg mb-4">Fashion Reference Books</h3>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <a href="https://www.amazon.co.uk/s?k=vintage+fashion+complete+guide&tag=chrisptee-21" target="_blank" class="amazon-btn justify-center">Vintage Fashion Guide</a>
+                <a href="https://www.amazon.co.uk/s?k=handbag+authentication+guide&tag=chrisptee-21" target="_blank" class="amazon-btn justify-center">Bag Authentication Guide</a>
+                <a href="https://www.amazon.co.uk/s?k=fashion+textiles+fabric+guide&tag=chrisptee-21" target="_blank" class="amazon-btn justify-center">Textile & Fabric Guide</a>
+                <a href="https://www.amazon.co.uk/s?k=history+of+fashion+design&tag=chrisptee-21" target="_blank" class="amazon-btn justify-center">History of Fashion Design</a>
+            </div>
+        </div>
+
+        <!-- Care & Storage -->
+        <div class="glass-card mb-6">
+            <h3 class="font-bold text-rose text-lg mb-4">Care & Storage</h3>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <a href="https://www.amazon.co.uk/s?k=garment+steamer+handheld&tag=chrisptee-21" target="_blank" class="amazon-btn justify-center">Garment Steamer</a>
+                <a href="https://www.amazon.co.uk/s?k=cedar+wood+blocks+moth&tag=chrisptee-21" target="_blank" class="amazon-btn justify-center">Cedar Moth Protection</a>
+                <a href="https://www.amazon.co.uk/s?k=acid+free+tissue+paper&tag=chrisptee-21" target="_blank" class="amazon-btn justify-center">Acid-Free Tissue Paper</a>
+                <a href="https://www.amazon.co.uk/s?k=cashmere+comb+pilling&tag=chrisptee-21" target="_blank" class="amazon-btn justify-center">Cashmere Comb</a>
+                <a href="https://www.amazon.co.uk/s?k=leather+conditioner+bag&tag=chrisptee-21" target="_blank" class="amazon-btn justify-center">Leather Conditioner</a>
+                <a href="https://www.amazon.co.uk/s?k=padded+coat+hangers+velvet&tag=chrisptee-21" target="_blank" class="amazon-btn justify-center">Velvet Padded Hangers</a>
+            </div>
+        </div>
+
+        <!-- Support The Village -->
+        <div class="glass-card-gold mb-6 text-center">
+            <h3 class="font-bold text-gold text-lg mb-3">Support The Atelier</h3>
+            <p class="text-cream/50 text-sm mb-6">Designer-Oid is free forever. If it's helped you avoid a fake or find a treasure, consider supporting the village.</p>
+            <div class="flex flex-wrap gap-4 justify-center">
+                <a href="https://buymeacoffee.com/chrispteemagician" target="_blank" class="btn-gold">Buy Me A Coffee</a>
+                <a href="https://ko-fi.com/zoom" target="_blank" class="btn-rose">Ko-Fi</a>
+            </div>
+            <p class="text-cream/30 text-xs mt-4">Coffee supporters get a week of Pro features across all -Oid apps!</p>
+        </div>
+
+        <!-- Noisy Brain -->
+        <div class="glass-card mb-6">
+            <h3 class="font-bold text-cream text-lg mb-3">Noisy Brain?</h3>
+            <p class="text-cream/50 text-sm leading-relaxed mb-3">If your brain won't stop. If everything is too loud, too fast, too much. That's OK. You're not broken &mdash; you're wired differently, and the world wasn't built for you. But we see you.</p>
+            <p class="text-cream/50 text-sm leading-relaxed mb-3">Samaritans: <strong class="text-cream">116 123</strong> (free, 24/7) &middot; Text SHOUT to <strong class="text-cream">85258</strong></p>
+            <p class="text-cream/40 text-xs">You are not alone. You never were.</p>
+        </div>
+
+        <!-- The Code -->
+        <div class="glass-card">
+            <h3 class="font-bold text-cream text-lg mb-3">The Code</h3>
+            <ul class="text-cream/50 text-sm space-y-2 leading-relaxed">
+                <li>&#8211; This is a safe space. For everyone. No exceptions.</li>
+                <li>&#8211; We don't help people sell fakes. Not ever.</li>
+                <li>&#8211; We protect beginners. Everyone started somewhere.</li>
+                <li>&#8211; Kindness is not weakness. It is infrastructure.</li>
+                <li>&#8211; Free forever. Coffeeware model. Donations optional.</li>
+                <li>&#8211; World domination through kindness. One authentication at a time.</li>
+            </ul>
+        </div>
+    </div>
+</section>
+
+<!-- ==================== SECTION 6: MEETING POINT GENERATOR ==================== -->
+<section id="pageMeet" class="snap-section py-16 px-4 section-reveal" style="background: linear-gradient(180deg, #0a0a0a 0%, #111 50%, #0a0a0a 100%);">
+    <div class="max-w-3xl mx-auto">
+        <div class="text-center mb-10">
+            <p class="text-4xl mb-2">📍</p>
+            <h2 class="text-3xl font-black text-cream">Meeting Point Generator</h2>
+            <div class="rose-line"></div>
+            <p class="text-cream/50 mt-3">Share your exact spot in three words. Markets, shows, fairs, car boots — never get lost again.</p>
+            <p class="text-xs text-cream/30 mt-2">Powered by <a href="https://what3words.com" class="text-rose/60 hover:text-rose transition" target="_blank" rel="noopener">what3words</a> &mdash; every 3×3m square on Earth has a unique 3-word address</p>
+        </div>
+
+        <!-- Use case selector -->
+        <div class="grid grid-cols-4 gap-2 mb-6">
+            <button class="usecase-btn active" data-icon="👗" data-title="My Rail" data-label="Fashion Rail" onclick="selectUseCase(this)">
+                <span class="text-xl block mb-1">👗</span>
+                <span class="text-xs font-semibold">My Rail</span>
+            </button>
+            <button class="usecase-btn" data-icon="✂️" data-title="The Fashion Stand" data-label="Fashion Stand" onclick="selectUseCase(this)">
+                <span class="text-xl block mb-1">✂️</span>
+                <span class="text-xs font-semibold">Fashion Stand</span>
+            </button>
+            <button class="usecase-btn" data-icon="🚗" data-title="Find My Car" data-label="Parked Car" onclick="selectUseCase(this)">
+                <span class="text-xl block mb-1">🚗</span>
+                <span class="text-xs font-semibold">My Car</span>
+            </button>
+            <button class="usecase-btn" data-icon="🏪" data-title="This Market" data-label="Market" onclick="selectUseCase(this)">
+                <span class="text-xl block mb-1">🏪</span>
+                <span class="text-xs font-semibold">This Market</span>
+            </button>
+        </div>
+
+        <!-- Input card -->
+        <div class="glass-card mb-4">
+            <button onclick="findMySpot()" class="w-full btn-rose mb-4" id="geoBtn">📍 Find My Exact Spot</button>
+            <p id="geoStatus" class="text-center text-cream/50 text-sm mb-3 hidden"></p>
+            <p class="text-cream/30 text-xs text-center mb-3">— or type a what3words address —</p>
+            <div class="relative">
+                <input type="text" id="w3wInput" placeholder="three.word.address"
+                    autocomplete="off" spellcheck="false"
+                    class="w-full px-4 py-3 bg-deep border border-rose/20 rounded-xl text-center text-cream focus:border-rose outline-none min-h-[48px] text-lg tracking-widest font-caveat"
+                    oninput="handleW3WInput(this.value)" onkeydown="handleW3WKeydown(event)">
+                <div id="w3wSuggestions" class="hidden absolute z-50 w-full mt-1 bg-mid border border-rose/20 rounded-xl overflow-hidden shadow-xl text-left"></div>
+            </div>
+            <div class="grid grid-cols-2 gap-3 mt-3">
+                <input type="text" id="meetEventName" placeholder="Event name (optional)"
+                    class="px-3 py-2 bg-deep border border-rose/10 rounded-lg text-cream/70 focus:border-rose/40 outline-none text-sm min-h-[44px]">
+                <input type="text" id="meetLocationLabel" placeholder="e.g. Gate 3, Aisle B"
+                    class="px-3 py-2 bg-deep border border-rose/10 rounded-lg text-cream/70 focus:border-rose/40 outline-none text-sm min-h-[44px]">
+            </div>
+            <button onclick="generateMeetCard()" class="w-full btn-gold mt-4">Generate Card ✨</button>
+        </div>
+
+        <!-- Card preview -->
+        <div id="meetCardPreview" class="hidden">
+            <div class="glass-card text-center" style="background: linear-gradient(135deg, #1a1a1a 0%, #0f0f0f 100%); border: 1px solid rgba(212,165,116,0.3);">
+                <div class="text-4xl mb-2" id="cardIcon">🛍️</div>
+                <p class="text-gold/60 text-xs font-bold uppercase tracking-widest mb-1" id="cardUseCaseTitle">Find My Stall</p>
+                <p class="font-caveat text-5xl text-rose font-bold mb-1 leading-tight" id="cardW3WDisplay">///word.word.word</p>
+                <p class="text-cream/40 text-sm mb-4" id="cardLocationLabel"></p>
+                <div id="meetQR" class="mx-auto mb-4" style="width:150px;height:150px;background:#fff;border-radius:12px;padding:8px;display:flex;align-items:center;justify-content:center;"></div>
+                <p class="text-cream/30 text-sm mb-4" id="cardEventName"></p>
+                <div class="flex gap-3 justify-center flex-wrap">
+                    <button onclick="shareSpot()" class="btn-rose text-sm">📤 Share Spot</button>
+                    <button onclick="copyW3WLink()" class="btn-outline text-sm">📋 Copy Link</button>
+                    <button onclick="resetMeetCard()" class="text-cream/30 hover:text-cream transition text-sm px-4 py-2 min-h-[44px]">New</button>
+                </div>
+            </div>
+            <p class="text-center text-cream/20 text-xs mt-4">
+                <a href="https://what3words.com" target="_blank" rel="noopener" class="hover:text-cream/40 transition">what3words.com</a> — scan the QR code to navigate there on any device
+            </p>
+        </div>
+    </div>
+</section>
+
+<!-- ==================== SECTION 7: VILLAGE + JOIN ==================== -->
+<section id="pageVillage" class="snap-section py-16 px-4 section-reveal" style="background: linear-gradient(180deg, #0a0a0a 0%, #111 50%, #0a0a0a 100%);">
+    <div class="max-w-3xl mx-auto">
+        <div class="text-center mb-10">
+            <p class="text-4xl mb-2">🏘️</p>
+            <h2 class="text-3xl font-black text-cream">The -Oid Villages</h2>
+            <div class="rose-line"></div>
+            <p class="text-cream/50 mt-3">Same AI brain, different expert heads. Each village has its own community of enthusiasts.</p>
+        </div>
+
+        <!-- Village Grid -->
+        <div class="grid grid-cols-3 sm:grid-cols-4 gap-3 mb-12">
+            <a href="https://magic-oid.co.uk" class="village-tile">
+                <span class="text-2xl mb-1">🎩</span>
+                <span class="text-xs font-semibold">Magic-Oid</span>
+            </a>
+            <a href="https://radi-oid.co.uk" class="village-tile">
+                <span class="text-2xl mb-1">📻</span>
+                <span class="text-xs font-semibold">Radi-Oid</span>
+            </a>
+            <a href="https://sail-oid.co.uk" class="village-tile">
+                <span class="text-2xl mb-1">⛵</span>
+                <span class="text-xs font-semibold">Sail-Oid</span>
+            </a>
+            <a href="https://guit-oid.co.uk" class="village-tile">
+                <span class="text-2xl mb-1">🎸</span>
+                <span class="text-xs font-semibold">Guit-Oid</span>
+            </a>
+            <a href="https://vinyl-oid.co.uk" class="village-tile">
+                <span class="text-2xl mb-1">💿</span>
+                <span class="text-xs font-semibold">Vinyl-Oid</span>
+            </a>
+            <a href="https://coin-oid.co.uk" class="village-tile">
+                <span class="text-2xl mb-1">🪙</span>
+                <span class="text-xs font-semibold">Coin-Oid</span>
+            </a>
+            <a href="https://watch-oid.co.uk" class="village-tile">
+                <span class="text-2xl mb-1">⌚</span>
+                <span class="text-xs font-semibold">Watch-Oid</span>
+            </a>
+            <a href="https://camera-oid.co.uk" class="village-tile">
+                <span class="text-2xl mb-1">📷</span>
+                <span class="text-xs font-semibold">Camera-Oid</span>
+            </a>
+            <a href="https://stamp-oid.co.uk" class="village-tile">
+                <span class="text-2xl mb-1">📮</span>
+                <span class="text-xs font-semibold">Stamp-Oid</span>
+            </a>
+            <a href="https://cannabin-oid.co.uk" class="village-tile">
+                <span class="text-2xl mb-1">🌿</span>
+                <span class="text-xs font-semibold">Cannabin-Oid</span>
+            </a>
+            <a href="https://fish-oid.co.uk" class="village-tile">
+                <span class="text-2xl mb-1">🐟</span>
+                <span class="text-xs font-semibold">Fish-Oid</span>
+            </a>
+            <div class="village-tile current">
+                <span class="text-2xl mb-1">👗</span>
+                <span class="text-xs font-bold text-rose">YOU'RE HERE!</span>
+            </div>
+            <a href="https://miniature-oid.co.uk" class="village-tile">
+                <span class="text-2xl mb-1">🔍</span>
+                <span class="text-xs font-semibold">Miniature-Oid</span>
+            </a>
+            <a href="https://zodiacman.co.uk" class="village-tile">
+                <span class="text-2xl mb-1">🔮</span>
+                <span class="text-xs font-semibold">Zodiacman</span>
+            </a>
+        </div>
+
+        <!-- Build Your Hamlet CTA -->
+        <div class="glass-card text-center mb-6" style="background: linear-gradient(135deg, rgba(212,165,116,0.08), rgba(232,180,184,0.05)); border-color: rgba(212,165,116,0.25);">
+            <p class="text-3xl mb-2">🏡</p>
+            <h3 class="text-xl font-bold text-gold mb-2">Claim Your Hamlet</h3>
+            <p class="text-cream/50 text-sm mb-4 leading-relaxed">Are you a dealer, maker, authenticator, or vintage specialist? Get your own corner of the village — your hamlet — in about 10 minutes. Free forever. Your people find you here.</p>
+            <a href="https://magic-oid.co.uk/hamlet/signup" class="btn-gold inline-block text-sm mb-3">Build My Hamlet →</a>
+            <p class="text-cream/30 text-xs">Already have one? <a href="https://magic-oid.co.uk/hamlet/signup" class="text-rose/60 hover:text-rose transition">Manage it here</a></p>
+        </div>
+
+        <!-- Start Your Village CTA -->
+        <div class="glass-card text-center mb-8" style="border-color: rgba(232,180,184,0.15);">
+            <p class="text-3xl mb-2">🌱</p>
+            <h3 class="text-xl font-bold text-cream mb-2">Start Your Own Village</h3>
+            <p class="text-cream/50 text-sm mb-4 leading-relaxed">Got a niche? Books, tools, plants, ceramics — if people collect it, it deserves a village. Same AI brain, your community's head. Built in a day.</p>
+            <a href="https://feelfamous.com" class="btn-rose inline-block text-sm">Talk to the FeelFamous Team →</a>
+        </div>
+
+        <!-- Village Sign In -->
+        <div id="villageSignIn" class="glass-card text-center mb-8">
+            <h3 class="text-2xl font-bold text-cream mb-3">Join the Village</h3>
+            <p class="text-cream/50 text-sm mb-4 leading-relaxed">Sign in with Patreon to earn kudos, track authentications, and unlock community features. One login works across every -Oid app.</p>
+            <button onclick="signInWithPatreon()" class="w-full btn-rose" style="min-height:52px; font-size:1.05rem;">Sign in with Patreon</button>
+            <p class="text-xs text-cream/30 mt-3">Secure OAuth. No passwords stored here.</p>
+        </div>
+
+        <!-- Join Tiers -->
+        <div class="mb-12">
+            <h3 class="text-2xl font-bold text-cream text-center mb-8">Village Tiers</h3>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div class="tier-card">
+                    <p class="text-3xl mb-3">🏠</p>
+                    <h4 class="font-bold text-cream text-lg mb-2">Villager</h4>
+                    <p class="text-cream/40 text-sm mb-3">Free forever</p>
+                    <ul class="text-cream/50 text-sm space-y-1 text-left">
+                        <li>&#10003; AI identification</li>
+                        <li>&#10003; Chatbot access</li>
+                        <li>&#10003; Learn section</li>
+                        <li>&#10003; Kudos & leaderboard</li>
+                    </ul>
+                </div>
+                <div class="tier-card featured">
+                    <p class="text-3xl mb-3">🏘️</p>
+                    <h4 class="font-bold text-gold text-lg mb-2">Founder Villager</h4>
+                    <p class="text-gold/60 text-sm mb-1">4.95/month</p>
+                    <p class="text-cream/30 text-xs mb-3">First 1,000 lock price forever</p>
+                    <ul class="text-cream/50 text-sm space-y-1 text-left">
+                        <li>&#10003; Everything in Villager</li>
+                        <li>&#10003; Unlimited analyses</li>
+                        <li>&#10003; Priority AI queue</li>
+                        <li>&#10003; Pro across ALL -Oids</li>
+                        <li>&#10003; Founder badge forever</li>
+                    </ul>
+                    <a href="https://www.patreon.com/chrisptee" target="_blank" class="btn-gold w-full mt-4 text-sm">Join on Patreon</a>
+                </div>
+                <div class="tier-card">
+                    <p class="text-3xl mb-3">🌉</p>
+                    <h4 class="font-bold text-cream text-lg mb-2">Bridge Walker</h4>
+                    <p class="text-cream/40 text-sm mb-3">Join 2+ villages</p>
+                    <ul class="text-cream/50 text-sm space-y-1 text-left">
+                        <li>&#10003; Cross-village badge</li>
+                        <li>&#10003; Bridge Walker status</li>
+                        <li>&#10003; Bonus kudos on signup</li>
+                        <li>&#10003; Cross-pollination perks</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Family Sites -->
+        <div class="text-center mb-8">
+            <h3 class="text-lg font-bold text-cream/60 mb-4">The FeelFamous Family</h3>
+            <div class="flex flex-wrap gap-3 justify-center text-sm">
+                <a href="https://comedymagic.co.uk" class="text-cream/40 hover:text-cream transition">Comedy Magic</a>
+                <span class="text-cream/20">|</span>
+                <a href="https://docstrange.co.uk" class="text-cream/40 hover:text-cream transition">Doc Strange</a>
+                <span class="text-cream/20">|</span>
+                <a href="https://chrisptee.co.uk" class="text-cream/40 hover:text-cream transition">Chris P Tee</a>
+                <span class="text-cream/20">|</span>
+                <a href="https://feelfamous.com" class="text-cream/40 hover:text-cream transition">FeelFamous</a>
+                <span class="text-cream/20">|</span>
+                <a href="https://strangemole.co.uk" class="text-cream/40 hover:text-cream transition">Strange Mole</a>
+                <span class="text-cream/20">|</span>
+                <a href="https://jackmingus.co.uk" class="text-cream/40 hover:text-cream transition">Jack Mingus</a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ==================== FOOTER ==================== -->
+<footer class="py-12 px-4 border-t border-rose/10" style="background: #0a0a0a;">
+    <div class="max-w-3xl mx-auto text-center">
+        <h3 class="text-lg font-bold text-rose tracking-wide mb-3">WE ALL STAND ON THE SHOULDERS OF GIANTS</h3>
+        <p class="text-sm text-cream/40 mb-6">Coco Chanel &middot; Christian Dior &middot; Yves Saint Laurent &middot; Vivienne Westwood &middot; Alexander McQueen &middot; Hubert de Givenchy &middot; Cristobal Balenciaga &middot; Rei Kawakubo</p>
+        <p class="text-xs text-cream/30 mb-2">
+            Part of the <a href="https://feelfamous.com" class="text-rose font-semibold hover:underline">FeelFamous</a> Ecosystem
+        </p>
+        <p class="font-caveat text-xl text-gold/60 mb-4">World Domination Through Kindness.</p>
+        <p class="text-xs text-cream/20">
+            Built with fire by the Chris P Trinity. Safe space for skill-sharing across generations. Adults site, kids welcome with parent permission. Check your labels, darling.
+        </p>
+    </div>
+</footer>
+
+<!-- Quick Nav FABs (signed in users) -->
+<div id="quickNav" class="hidden fixed top-16 right-4 flex flex-col gap-2 z-[90]">
+    <button onclick="switchView('leaderboard')" class="w-12 h-12 rounded-full bg-mid border border-rose/20 text-cream flex items-center justify-center shadow-lg hover:border-rose transition" title="Leaderboard">🏆</button>
+    <button onclick="switchView('qr')" class="w-12 h-12 rounded-full bg-mid border border-rose/20 text-cream flex items-center justify-center shadow-lg hover:border-rose transition" title="QR Code">📱</button>
+</div>
+
+<canvas id="resultCanvas" class="hidden"></canvas>
+
+<script>
+// ==================== CONFIGURATION ====================
+const CONFIG = {
+    oidName: 'Designer-Oid',
+    oidSlug: 'designer',
+    primaryColor: '#e8b4b8',
+    goldColor: '#d4a574',
+    loadingIcon: '👗',
+    supabaseUrl: 'https://pdnjeynugptnavkdbmxh.supabase.co',
+    supabaseKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBkbmpleW51Z3B0bmF2a2RibXhoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjkwMTEzMDAsImV4cCI6MjA4NDU4NzMwMH0.GawisR01EykMtdauBMxenmHF2NXDMzDOJl8WgzkwFQo',
+    amazonTag: 'chrisptee-21',
+    chatEndpoint: '/.netlify/functions/chat-stitch',
+    analyzeEndpoint: '/.netlify/functions/analyze-image',
+    adminEmails: ['chris@chrisptee.co.uk', 'chris@chrisptee.com', 'glowgadgets@gmail.com']
+};
+
+// ==================== PATREON AUTH ====================
+const PATREON_CLIENT_ID = 'A-K7cVCZBl7mQZDlrq0obIq7Jm0RPYAMGstfBsUyEeX-5e6WvU24ZWMTGBuypxot';
+const PATREON_OAUTH_URL = `https://www.patreon.com/oauth2/authorize?response_type=code&client_id=${PATREON_CLIENT_ID}&redirect_uri=https://designer-oid.co.uk/auth/patreon&scope=identity%20identity.memberships`;
+let patreonSession = null;
+
+// ==================== SUPABASE ====================
+const { createClient } = supabase;
+const supabaseClient = createClient(CONFIG.supabaseUrl, CONFIG.supabaseKey);
+
+// ==================== STATE ====================
+let currentUser = null;
+let currentResult = null;
+let userQRCode = null;
+let currentController = null;
+let loadingTimer = null;
+let loadingStartTime = null;
+let patienceInterval = null;
+let chatHistory = [];
+
+// ==================== PATIENCE MESSAGES ====================
+const patienceMessages = [
+    "Examining the stitching pattern...",
+    "Checking the hardware weight...",
+    "Analysing the leather grain...",
+    "Inspecting the label placement...",
+    "Verifying the serial number format...",
+    "Studying the fabric weave under magnification...",
+    "Assessing the zipper action...",
+    "Examining the lining quality...",
+    "Checking logo alignment precision...",
+    "Reviewing the colour authenticity...",
+    "Inspecting button and clasp details...",
+    "Analysing the date code format...",
+    "Checking for UV security features...",
+    "Comparing against known authentication markers...",
+    "Studying the font consistency on labels...",
+    "Examining the edge finishing technique...",
+    "Assessing the overall craftsmanship...",
+    "Cross-referencing against the archives...",
+    "Monsieur Stitch is consulting his reference library...",
+    "Verifying the country of origin markings..."
+];
+
+// ==================== INITIALIZATION ====================
+window.onload = async function() {
+    // UI init first — keeps page visible even if Supabase throws
+    initSectionReveal();
+    initNavHighlight();
+    checkAgeVerification();
+    restorePatreonSession();
+    if (window.location.search.includes('code=') && window.location.pathname.includes('/auth/patreon')) {
+        await handlePatreonCallback();
+    }
+    try {
+        await checkUser();
+        await loadRecentActivity();
+        loadBroadcast();
+    } catch(e) {
+        console.warn('Village init error:', e);
+    }
+};
+
+// ==================== SECTION REVEAL ====================
+function initSectionReveal() {
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('visible');
+            }
+        });
+    }, { threshold: 0.1 });
+
+    document.querySelectorAll('.section-reveal').forEach(el => observer.observe(el));
+}
+
+// ==================== NAVIGATION ====================
+function goTo(id) {
+    document.getElementById(id).scrollIntoView({ behavior: 'smooth' });
+}
+
+function initNavHighlight() {
+    const sections = ['pageHome', 'pageLearn', 'pageQA', 'pageStitch', 'pageGear', 'pageMeet', 'pageVillage'];
+    const dots = document.querySelectorAll('.nav-dot');
+
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                const idx = sections.indexOf(entry.target.id);
+                if (idx !== -1) {
+                    dots.forEach(d => d.classList.remove('active'));
+                    dots[idx].classList.add('active');
+                }
+            }
+        });
+    }, { threshold: 0.3 });
+
+    sections.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) observer.observe(el);
+    });
+}
+
+// ==================== AGE VERIFICATION ====================
+function checkAgeVerification() {
+    const verified = localStorage.getItem('ageVerified');
+    if (!verified) {
+        document.getElementById('ageModal').classList.remove('hidden');
+    }
+}
+
+function confirmAge(type) {
+    localStorage.setItem('ageVerified', type);
+    localStorage.setItem('ageVerifiedDate', new Date().toISOString());
+    document.getElementById('ageModal').classList.add('hidden');
+    if (type === 'under18') {
+        alert('Please ask your parent or guardian to sign up with you. They can create an account and add you as a supervised user.');
+    }
+}
+
+// ==================== BROADCAST ====================
+function getYouTubeEmbedUrl(url) {
+    if (!url) return '';
+    let videoId = '';
+    if (url.includes('youtube.com/shorts/')) videoId = url.split('youtube.com/shorts/')[1].split('?')[0];
+    else if (url.includes('youtu.be/')) videoId = url.split('youtu.be/')[1].split('?')[0];
+    else if (url.includes('youtube.com/watch')) videoId = new URLSearchParams(url.split('?')[1]).get('v');
+    else if (url.includes('youtube.com/embed/')) videoId = url.split('youtube.com/embed/')[1].split('?')[0];
+    return videoId ? `https://www.youtube.com/embed/${videoId}` : url;
+}
+
+async function loadBroadcast() {
+    try {
+        const { data } = await supabaseClient.from('broadcast').select('*').eq('is_active', true).limit(1).single();
+        if (!data) return;
+        document.getElementById('broadcastVideo').src = getYouTubeEmbedUrl(data.video_url);
+        document.getElementById('broadcastTitle').textContent = data.title || 'Village Broadcast';
+        document.getElementById('broadcastSection').classList.remove('hidden');
+        if (data.is_emergency) document.getElementById('emergencyBanner').classList.remove('hidden');
+    } catch (e) { console.log('Broadcast not available'); }
+}
+
+// ==================== AUTH / USER ====================
+async function checkUser() {
+    const { data: { session } } = await supabaseClient.auth.getSession();
+    if (session) {
+        currentUser = session.user;
+        await loadUserData();
+        showUserStatus();
+    }
+}
+
+async function loadUserData() {
+    if (!currentUser) return;
+    try {
+        let { data: userData, error } = await supabaseClient.from('users').select('*').eq('id', currentUser.id).single();
+        if (error || !userData) {
+            const { data: newUser } = await supabaseClient.from('users').insert([{
+                id: currentUser.id,
+                email: currentUser.email,
+                username: currentUser.email.split('@')[0],
+                kudos: 0,
+                oid_memberships: [CONFIG.oidSlug]
+            }]).select().single();
+            userData = newUser;
+        } else {
+            if (!userData.oid_memberships.includes(CONFIG.oidSlug)) {
+                await supabaseClient.from('users').update({
+                    oid_memberships: [...userData.oid_memberships, CONFIG.oidSlug]
+                }).eq('id', currentUser.id);
+            }
+        }
+        const oidCount = userData.oid_memberships.length;
+        let badge = 'Villager';
+        if (oidCount >= 5) badge = 'Pollinator';
+        else if (oidCount >= 2) badge = 'Bridge Walker';
+        document.getElementById('userName').textContent = '@' + userData.username;
+        document.getElementById('userBadge').textContent = badge;
+        document.getElementById('userKudos').textContent = userData.kudos || 0;
+        await generateQRCode();
+    } catch (error) { console.error('Error loading user data:', error); }
+}
+
+function showUserStatus() {
+    document.getElementById('userStatusBar').classList.remove('hidden');
+    document.getElementById('quickNav').classList.remove('hidden');
+    document.getElementById('signInPrompt')?.classList.add('hidden');
+}
+
+// ==================== PATREON FUNCTIONS ====================
+function signInWithPatreon() {
+    window.location.href = PATREON_OAUTH_URL;
+}
+
+function restorePatreonSession() {
+    try {
+        const raw = localStorage.getItem('designeroid_patreon_session');
+        if (!raw) return;
+        const stored = JSON.parse(raw);
+        if (Date.now() > stored.expiresAt) {
+            localStorage.removeItem('designeroid_patreon_session');
+            return;
+        }
+        patreonSession = stored;
+        showPatreonStatus();
+    } catch (e) { console.warn('restorePatreonSession:', e); }
+}
+
+async function handlePatreonCallback() {
+    const params = new URLSearchParams(window.location.search);
+    const code = params.get('code');
+    if (!code) return;
+    try {
+        const res = await fetch(`/.netlify/functions/patreon-auth?code=${encodeURIComponent(code)}`);
+        if (!res.ok) throw new Error('auth failed');
+        const data = await res.json();
+        const session = { isPro: data.isPro, tier: data.tier, expiresAt: Date.now() + 86400000 };
+        localStorage.setItem('designeroid_patreon_session', JSON.stringify(session));
+        patreonSession = session;
+        showPatreonStatus();
+        window.history.replaceState({}, '', '/');
+    } catch (e) { console.warn('handlePatreonCallback:', e); }
+}
+
+function showPatreonStatus() {
+    if (!patreonSession) return;
+    const el = document.getElementById('patreonStatus');
+    if (el) {
+        el.classList.remove('hidden');
+        if (patreonSession.isPro) {
+            el.innerHTML = `<span class="text-green-400 font-bold">✓ Patreon ${patreonSession.tier || 'member'} — Pro unlocked</span>`;
+        } else {
+            el.innerHTML = `<span class="text-cream/60">Signed in — <a href="https://www.patreon.com/chrisptee" target="_blank" class="text-rose font-semibold">upgrade for Pro</a></span>`;
+        }
+    }
+    const btn = document.getElementById('patreonSignInBtn');
+    if (btn) btn.classList.add('hidden');
+    const signInPrompt = document.getElementById('signInPrompt');
+    if (signInPrompt && patreonSession.isPro) signInPrompt.classList.add('hidden');
+    const villageSignIn = document.getElementById('villageSignIn');
+    if (villageSignIn) villageSignIn.classList.add('hidden');
+}
+
+async function signOut() {
+    await supabaseClient.auth.signOut();
+    currentUser = null;
+    location.reload();
+}
+
+async function generateQRCode() {
+    if (!currentUser) return;
+    const referralUrl = `${window.location.origin}?ref=${currentUser.id}`;
+    userQRCode = await QRCode.toDataURL(referralUrl, { width: 300, color: { dark: '#0a0a0a', light: '#ffffff' } });
+    document.getElementById('qrImage').src = userQRCode;
+}
+
+async function loadRecentActivity() {
+    try {
+        const { data } = await supabaseClient.from('users').select('username, created_at').order('created_at', { ascending: false }).limit(5);
+        if (data && data.length > 0) {
+            document.getElementById('activityList').innerHTML = data.map(user =>
+                `<p>${CONFIG.loadingIcon} <strong class="text-cream/70">${user.username}</strong> joined the village!</p>`
+            ).join('');
+        } else {
+            document.getElementById('activityList').innerHTML = '<p class="text-center text-cream/30">Be the first to join!</p>';
+        }
+    } catch (error) { console.error('Error loading activity:', error); }
+}
+
+// ==================== TAB SWITCHING ====================
+function switchMainTab(tab) {
+    const authView = document.getElementById('authenticateView');
+    const roastView = document.getElementById('roastView');
+    const tabAuth = document.getElementById('tabAuthenticate');
+    const tabRoast = document.getElementById('tabRoast');
+
+    if (tab === 'authenticate') {
+        authView.classList.remove('hidden');
+        roastView.classList.add('hidden');
+        tabAuth.classList.add('active');
+        tabRoast.classList.remove('active');
+    } else {
+        authView.classList.add('hidden');
+        roastView.classList.remove('hidden');
+        tabAuth.classList.remove('active');
+        tabRoast.classList.add('active');
+    }
+}
+
+function switchLearnTab(tab, btn) {
+    document.querySelectorAll('#pageLearn .tab-content').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('#pageLearn .tab-btn').forEach(b => b.classList.remove('active'));
+    const tabMap = { bags: 'learnBags', shoes: 'learnShoes', labels: 'learnLabels' };
+    document.getElementById(tabMap[tab]).classList.add('active');
+    btn.classList.add('active');
+}
+
+function switchView(view) {
+    ['authenticateView', 'roastView', 'loadingView', 'resultView', 'leaderboardView', 'qrView'].forEach(v => {
+        const el = document.getElementById(v);
+        if (el) el.classList.add('hidden');
+    });
+    if (view === 'home') {
+        document.getElementById('authenticateView').classList.remove('hidden');
+    } else if (view === 'leaderboard') {
+        document.getElementById('leaderboardView').classList.remove('hidden');
+        loadLeaderboard();
+    } else if (view === 'qr') {
+        document.getElementById('qrView').classList.remove('hidden');
+    }
+}
+
+async function loadLeaderboard() {
+    try {
+        const { data } = await supabaseClient.from('users').select('username, kudos, oid_memberships').order('kudos', { ascending: false }).limit(10);
+        if (data) {
+            document.getElementById('leaderboardList').innerHTML = data.map((user, i) => {
+                const oidCount = user.oid_memberships.length;
+                let badge = 'Villager';
+                if (oidCount >= 5) badge = 'Pollinator';
+                else if (oidCount >= 2) badge = 'Bridge Walker';
+                return `<div class="flex items-center justify-between bg-deep p-4 rounded-xl border border-rose/5">
+                    <div class="flex items-center gap-3">
+                        <span class="text-xl font-bold text-rose">#${i + 1}</span>
+                        <span class="text-cream/40 text-sm">${badge}</span>
+                        <span class="font-bold text-cream">@${user.username}</span>
+                    </div>
+                    <span class="text-gold font-bold">${user.kudos} Kudos</span>
+                </div>`;
+            }).join('');
+        }
+    } catch (error) { console.error('Error loading leaderboard:', error); }
+}
+
+// ==================== Q&A TOGGLE ====================
+function toggleQA(item) {
+    const answer = item.querySelector('.qa-answer');
+    const icon = item.querySelector('span:last-child');
+    const isOpen = answer.classList.contains('open');
+
+    // Close all others
+    document.querySelectorAll('.qa-answer').forEach(a => a.classList.remove('open'));
+    document.querySelectorAll('.qa-item span:last-child').forEach(s => s.textContent = '+');
+
+    if (!isOpen) {
+        answer.classList.add('open');
+        icon.textContent = '−';
+    }
+}
+
+// ==================== CHATBOT ====================
+async function sendChat() {
+    const input = document.getElementById('chatInput');
+    const question = input.value.trim();
+    if (!question) return;
+
+    const messagesDiv = document.getElementById('chatMessages');
+    const sendBtn = document.getElementById('chatSendBtn');
+
+    // Add user message
+    messagesDiv.innerHTML += `<div class="chat-bubble-user">${escapeHtml(question)}</div>`;
+    input.value = '';
+    sendBtn.disabled = true;
+    sendBtn.textContent = '...';
+
+    // Add typing indicator
+    const typingId = 'typing-' + Date.now();
+    messagesDiv.innerHTML += `<div id="${typingId}" class="chat-bubble-bot text-cream/40">Monsieur Stitch is thinking...</div>`;
+    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+
+    chatHistory.push({ role: 'user', text: question });
+
+    try {
+        const response = await fetch(CONFIG.chatEndpoint, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ question, history: chatHistory.slice(-6) })
+        });
+
+        const data = await response.json();
+        const answer = data.answer || 'Mon dieu, something went wrong. Try again, darling?';
+
+        // Remove typing indicator and add real response
+        const typingEl = document.getElementById(typingId);
+        if (typingEl) typingEl.remove();
+
+        messagesDiv.innerHTML += `<div class="chat-bubble-bot">${escapeHtml(answer)}</div>`;
+        chatHistory.push({ role: 'assistant', text: answer });
+
+    } catch (error) {
+        const typingEl = document.getElementById(typingId);
+        if (typingEl) typingEl.remove();
+        messagesDiv.innerHTML += `<div class="chat-bubble-bot">Quelle catastrophe! Something went wrong. Like putting silk in a tumble dryer. Try again in a moment, mon ami.</div>`;
+    }
+
+    sendBtn.disabled = false;
+    sendBtn.textContent = 'Send';
+    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML.replace(/\n/g, '<br>');
+}
+
+// ==================== LOADING TIMER ====================
+function startLoadingTimer() {
+    loadingStartTime = Date.now();
+    let messageIndex = 0;
+
+    loadingTimer = setInterval(() => {
+        const elapsed = Math.floor((Date.now() - loadingStartTime) / 1000);
+        const timerEl = document.getElementById('loadingTimer');
+        if (timerEl) timerEl.textContent = `${elapsed} second${elapsed !== 1 ? 's' : ''}`;
+        if (elapsed >= 10) {
+            const patienceEl = document.getElementById('patienceMessage');
+            if (patienceEl) patienceEl.classList.remove('hidden');
+        }
+    }, 1000);
+
+    patienceInterval = setInterval(() => {
+        const messageEl = document.getElementById('loadingMessage');
+        if (messageEl) {
+            messageEl.textContent = patienceMessages[messageIndex];
+            messageIndex = (messageIndex + 1) % patienceMessages.length;
+        }
+    }, 3000);
+}
+
+function stopLoadingTimer() {
+    if (loadingTimer) { clearInterval(loadingTimer); loadingTimer = null; }
+    if (patienceInterval) { clearInterval(patienceInterval); patienceInterval = null; }
+    loadingStartTime = null;
+    const patienceEl = document.getElementById('patienceMessage');
+    if (patienceEl) patienceEl.classList.add('hidden');
+}
+
+// ==================== FETCH WITH RETRY ====================
+async function fetchWithRetry(url, options, maxRetries = 3, baseDelay = 2000) {
+    let lastError;
+    for (let attempt = 0; attempt < maxRetries; attempt++) {
+        try {
+            const response = await fetch(url, options);
+            if (response.status === 503) {
+                const delay = baseDelay * Math.pow(2, attempt);
+                const statusEl = document.getElementById('loadingStatus');
+                if (statusEl) statusEl.textContent = `Server busy, retrying... (${attempt + 1}/${maxRetries})`;
+                await new Promise(resolve => setTimeout(resolve, delay));
+                continue;
+            }
+            return response;
+        } catch (error) {
+            lastError = error;
+            if (error.name === 'AbortError') throw error;
+            if (attempt < maxRetries - 1) {
+                const delay = baseDelay * Math.pow(2, attempt);
+                await new Promise(resolve => setTimeout(resolve, delay));
+            }
+        }
+    }
+    throw lastError || new Error('Max retries exceeded');
+}
+
+// ==================== IMAGE COMPRESSION ====================
+async function compressImage(file, maxSize = 800, quality = 0.7) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const img = new Image();
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                let width = img.width;
+                let height = img.height;
+                if (width > height) {
+                    if (width > maxSize) { height *= maxSize / width; width = maxSize; }
+                } else {
+                    if (height > maxSize) { width *= maxSize / height; height = maxSize; }
+                }
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, width, height);
+                const dataUrl = canvas.toDataURL('image/jpeg', quality);
+                resolve({ base64: dataUrl.split(',')[1], dataUrl });
+            };
+            img.onerror = reject;
+            img.src = e.target.result;
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+    });
+}
+
+// ==================== AMAZON SEARCH PARSE ====================
+function parseAmazonSearch(description) {
+    const match = description.match(/AMAZON_SEARCH:\s*(.+?)(\n|$)/i);
+    if (match) {
+        const searchTerm = match[1].trim();
+        const cleanDescription = description.replace(/AMAZON_SEARCH:\s*.+?(\n|$)/i, '').trim();
+        return {
+            description: cleanDescription,
+            amazonSearch: searchTerm,
+            amazonUrl: `https://www.amazon.co.uk/s?k=${encodeURIComponent(searchTerm)}&tag=${CONFIG.amazonTag}`
+        };
+    }
+    return { description, amazonSearch: null, amazonUrl: null };
+}
+
+// ==================== IMAGE UPLOAD & ANALYSIS ====================
+async function handleUpload(mode, input) {
+    const file = input.files[0];
+    if (!file) return;
+
+    if (currentController) currentController.abort();
+    currentController = new AbortController();
+
+    ['authenticateView', 'roastView'].forEach(v => document.getElementById(v).classList.add('hidden'));
+    document.getElementById('loadingView').classList.remove('hidden');
+    document.getElementById('loadingStatus').textContent = 'Checking the label...';
+    document.getElementById('loadingMessage').textContent = 'Monsieur Stitch is examining the stitching...';
+    document.getElementById('loadingTimer').textContent = '0 seconds';
+
+    startLoadingTimer();
+
+    try {
+        const compressed = await compressImage(file, 800, 0.7);
+        const response = await fetchWithRetry(CONFIG.analyzeEndpoint, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ image: compressed.base64, mode }),
+            signal: currentController.signal
+        });
+
+        const data = await response.json();
+        currentResult = { mode, image: compressed.dataUrl, ...data };
+
+        stopLoadingTimer();
+        showResult(currentResult);
+
+        if (currentUser) {
+            await awardKudos(10, 'Image analysis');
+            document.getElementById('kudosEarned').classList.remove('hidden');
+            document.getElementById('signInPrompt').classList.add('hidden');
+            await loadUserData();
+        }
+    } catch (error) {
+        stopLoadingTimer();
+        if (error.name === 'AbortError') return;
+        console.error('Error:', error);
+        alert('Error analysing image. Please try again, darling.');
+        resetToHome();
+    }
+}
+
+function showResult(result) {
+    document.getElementById('loadingView').classList.add('hidden');
+    document.getElementById('resultView').classList.remove('hidden');
+    document.getElementById('resultImage').src = result.image;
+    document.getElementById('resultTitle').textContent = result.title || 'Authenticated!';
+
+    const parsed = parseAmazonSearch(result.description || '');
+    document.getElementById('resultDescription').innerHTML = parsed.description.replace(/\n/g, '<br>');
+
+    const amazonLinkDiv = document.getElementById('amazonLink');
+    if (parsed.amazonUrl) {
+        amazonLinkDiv.innerHTML = `<a href="${parsed.amazonUrl}" target="_blank" class="amazon-btn">Search "${parsed.amazonSearch}" on Amazon</a>`;
+    } else {
+        amazonLinkDiv.innerHTML = '';
+    }
+
+    const priceEl = document.getElementById('resultPrice');
+    if (result.price) {
+        priceEl.textContent = 'Est. Value: ' + result.price;
+        priceEl.classList.remove('hidden');
+    } else {
+        priceEl.classList.add('hidden');
+    }
+
+    document.getElementById('resultAttribution').textContent = currentUser
+        ? `Authenticated by @${currentUser.email.split('@')[0]}`
+        : `Authenticated by ${CONFIG.oidName}`;
+}
+
+// ==================== SHARE / DOWNLOAD ====================
+async function shareResult() {
+    if (!currentResult) return;
+    const shareData = {
+        title: currentResult.title || CONFIG.oidName + ' Result',
+        text: `${currentResult.title}\n\n${currentResult.description?.substring(0, 200)}...\n\nAuthenticated by ${CONFIG.oidName}`,
+        url: window.location.href
+    };
+    if (navigator.share && navigator.canShare && navigator.canShare(shareData)) {
+        try { await navigator.share(shareData); }
+        catch (err) { if (err.name !== 'AbortError') fallbackShare(shareData); }
+    } else { fallbackShare(shareData); }
+}
+
+function fallbackShare(shareData) {
+    const text = `${shareData.title}\n\n${shareData.text}\n\n${shareData.url}`;
+    navigator.clipboard.writeText(text).then(() => {
+        alert('Copied to clipboard! Share it, darling.');
+    }).catch(() => { alert('Could not copy. Please share manually.'); });
+}
+
+function wrapText(ctx, text, maxWidth) {
+    const words = text.split(' ');
+    const lines = [];
+    let currentLine = '';
+    for (const word of words) {
+        const testLine = currentLine + word + ' ';
+        if (ctx.measureText(testLine).width > maxWidth && currentLine.length > 0) {
+            lines.push(currentLine.trim());
+            currentLine = word + ' ';
+        } else { currentLine = testLine; }
+    }
+    if (currentLine.trim()) lines.push(currentLine.trim());
+    return lines;
+}
+
+async function downloadResult() {
+    if (!currentResult) return;
+    const canvas = document.getElementById('resultCanvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = 1080;
+    canvas.height = 1350;
+
+    // Background
+    const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+    gradient.addColorStop(0, '#0a0a0a');
+    gradient.addColorStop(0.5, '#1a1a1a');
+    gradient.addColorStop(1, '#0a0a0a');
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // Rose gold accent line at top
+    const accentGrad = ctx.createLinearGradient(0, 0, canvas.width, 0);
+    accentGrad.addColorStop(0, '#e8b4b8');
+    accentGrad.addColorStop(1, '#d4a574');
+    ctx.fillStyle = accentGrad;
+    ctx.fillRect(0, 0, canvas.width, 4);
+
+    const img = new Image();
+    img.onload = () => {
+        const scale = Math.min(800 / img.width, 600 / img.height);
+        const w = img.width * scale;
+        const h = img.height * scale;
+        const x = (canvas.width - w) / 2;
+        const y = 100;
+
+        ctx.save();
+        ctx.shadowColor = 'rgba(232,180,184,0.2)';
+        ctx.shadowBlur = 30;
+        ctx.shadowOffsetY = 10;
+        ctx.drawImage(img, x, y, w, h);
+        ctx.restore();
+
+        // Title
+        ctx.fillStyle = '#e8b4b8';
+        ctx.font = 'bold 48px Outfit, sans-serif';
+        ctx.textAlign = 'center';
+        const titleLines = wrapText(ctx, currentResult.title || CONFIG.oidName, 900);
+        let titleY = y + h + 80;
+        titleLines.forEach(line => { ctx.fillText(line, canvas.width / 2, titleY); titleY += 55; });
+
+        // Description
+        const parsed = parseAmazonSearch(currentResult.description || '');
+        ctx.fillStyle = '#f5f5f5';
+        ctx.font = '28px Outfit, sans-serif';
+        const descLines = wrapText(ctx, parsed.description.substring(0, 300), 900);
+        let descY = titleY + 30;
+        descLines.slice(0, 6).forEach(line => { ctx.fillText(line, canvas.width / 2, descY); descY += 38; });
+
+        // Attribution
+        ctx.fillStyle = '#d4a574';
+        ctx.font = 'bold 28px Outfit, sans-serif';
+        ctx.fillText(currentUser ? `Authenticated by @${currentUser.email.split('@')[0]}` : `Authenticated by ${CONFIG.oidName}`, canvas.width / 2, canvas.height - 180);
+
+        // Website
+        ctx.fillStyle = '#e8b4b8';
+        ctx.font = 'bold 36px Outfit, sans-serif';
+        ctx.fillText('designer-oid.co.uk', canvas.width / 2, canvas.height - 120);
+
+        // Tagline
+        ctx.fillStyle = 'rgba(245,245,245,0.5)';
+        ctx.font = '24px Outfit, sans-serif';
+        ctx.fillText('Check your labels, darling.', canvas.width / 2, canvas.height - 70);
+
+        const link = document.createElement('a');
+        link.download = 'designer-oid-result.png';
+        link.href = canvas.toDataURL();
+        link.click();
+    };
+    img.src = currentResult.image;
+}
+
+function downloadQR() {
+    if (!userQRCode) return;
+    const link = document.createElement('a');
+    link.download = `${CONFIG.oidName}-referral-qr.png`;
+    link.href = userQRCode;
+    link.click();
+}
+
+// ==================== KUDOS ====================
+async function awardKudos(amount, reason) {
+    if (!currentUser) return;
+    try {
+        await supabaseClient.rpc('increment_kudos', { user_id: currentUser.id, amount });
+        await supabaseClient.from('kudos_transactions').insert([{ user_id: currentUser.id, amount, reason }]);
+    } catch (error) { console.error('Kudos error:', error); }
+}
+
+// ==================== RESET ====================
+function resetToHome() {
+    stopLoadingTimer();
+    if (currentController) { currentController.abort(); currentController = null; }
+    document.getElementById('resultView').classList.add('hidden');
+    document.getElementById('loadingView').classList.add('hidden');
+    document.getElementById('authenticateView').classList.remove('hidden');
+    document.getElementById('kudosEarned')?.classList.add('hidden');
+    currentResult = null;
+    ['cameraInput', 'galleryInput', 'roastCamera', 'roastGallery'].forEach(id => {
+        const input = document.getElementById(id);
+        if (input) input.value = '';
+    });
+}
+
+// ==================== REFERRAL ====================
+const urlParams = new URLSearchParams(window.location.search);
+const refCode = urlParams.get('ref');
+if (refCode) localStorage.setItem('referredBy', refCode);
+
+// ==================== MEETING POINT GENERATOR ====================
+const W3W_KEY = 'R7VL7Q93';
+let currentW3WAddress = '';
+let currentUseCase = { icon: '👗', title: 'My Rail', label: 'Fashion Rail' };
+let w3wSuggestTimer = null;
+
+function selectUseCase(btn) {
+    document.querySelectorAll('.usecase-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentUseCase = {
+        icon: btn.dataset.icon,
+        title: btn.dataset.title,
+        label: btn.dataset.label
+    };
+}
+
+function cleanW3W(val) {
+    return val.replace(/^\/+/, '').toLowerCase().trim();
+}
+
+function isCompleteW3W(val) {
+    const parts = cleanW3W(val).split('.');
+    return parts.length === 3 && parts.every(p => p.length > 0);
+}
+
+async function handleW3WInput(val) {
+    clearTimeout(w3wSuggestTimer);
+    const clean = cleanW3W(val);
+    if (clean.length < 3) {
+        document.getElementById('w3wSuggestions').classList.add('hidden');
+        return;
+    }
+    w3wSuggestTimer = setTimeout(() => fetchW3WSuggestions(clean), 280);
+}
+
+function handleW3WKeydown(e) {
+    if (e.key === 'Escape') document.getElementById('w3wSuggestions').classList.add('hidden');
+}
+
+async function fetchW3WSuggestions(partial) {
+    try {
+        const res = await fetch(`https://api.what3words.com/v3/autosuggest?input=${encodeURIComponent(partial)}&key=${W3W_KEY}&language=en&n-results=4&clip-to-country=GB`);
+        const data = await res.json();
+        const box = document.getElementById('w3wSuggestions');
+        if (!data.suggestions || data.suggestions.length === 0) { box.classList.add('hidden'); return; }
+        box.innerHTML = data.suggestions.map(s =>
+            `<div class="w3w-suggestion" onclick="selectAddress('${s.words}')">
+                <span class="text-rose font-caveat text-lg">///</span><span class="text-cream font-caveat text-lg">${s.words}</span>
+                ${s.nearestPlace ? `<span class="text-cream/40 text-xs ml-2">${s.nearestPlace}</span>` : ''}
+            </div>`
+        ).join('');
+        box.classList.remove('hidden');
+    } catch(e) { /* silent fail */ }
+}
+
+function selectAddress(words) {
+    currentW3WAddress = words;
+    document.getElementById('w3wInput').value = words;
+    document.getElementById('w3wSuggestions').classList.add('hidden');
+}
+
+async function findMySpot() {
+    const btn = document.getElementById('geoBtn');
+    const status = document.getElementById('geoStatus');
+    if (!navigator.geolocation) {
+        status.textContent = 'Geolocation not available on this device.';
+        status.classList.remove('hidden');
+        return;
+    }
+    btn.textContent = '⏳ Finding your spot...';
+    btn.disabled = true;
+    status.classList.add('hidden');
+    navigator.geolocation.getCurrentPosition(
+        async (pos) => {
+            const { latitude: lat, longitude: lng } = pos.coords;
+            try {
+                const res = await fetch(`https://api.what3words.com/v3/convert-to-3wa?coordinates=${lat},${lng}&key=${W3W_KEY}&language=en`);
+                const data = await res.json();
+                if (data.words) {
+                    currentW3WAddress = data.words;
+                    document.getElementById('w3wInput').value = data.words;
+                    status.textContent = `Got it! Your spot: ///${data.words}`;
+                    status.classList.remove('hidden');
+                } else {
+                    status.textContent = 'Could not convert location. Try typing your address.';
+                    status.classList.remove('hidden');
+                }
+            } catch(e) {
+                status.textContent = `Location found (${lat.toFixed(4)}, ${lng.toFixed(4)}) — type the address manually.`;
+                status.classList.remove('hidden');
+            }
+            btn.textContent = '📍 Find My Exact Spot';
+            btn.disabled = false;
+        },
+        (err) => {
+            const msgs = { 1: 'Location access denied.', 2: 'Location unavailable.', 3: 'Location timed out.' };
+            status.textContent = msgs[err.code] || 'Could not get location.';
+            status.classList.remove('hidden');
+            btn.textContent = '📍 Find My Exact Spot';
+            btn.disabled = false;
+        },
+        { timeout: 10000, maximumAge: 60000 }
+    );
+}
+
+function generateMeetCard() {
+    const inputVal = cleanW3W(document.getElementById('w3wInput').value);
+    if (!isCompleteW3W(inputVal)) {
+        alert('Please enter or find a complete what3words address (three words separated by dots).');
+        return;
+    }
+    currentW3WAddress = inputVal;
+    const eventName = document.getElementById('meetEventName').value.trim();
+    const locationLabel = document.getElementById('meetLocationLabel').value.trim();
+
+    document.getElementById('cardIcon').textContent = currentUseCase.icon;
+    document.getElementById('cardUseCaseTitle').textContent = currentUseCase.title;
+    document.getElementById('cardW3WDisplay').textContent = '///' + currentW3WAddress;
+    document.getElementById('cardLocationLabel').textContent = locationLabel || currentUseCase.label;
+    document.getElementById('cardEventName').textContent = eventName || '';
+
+    // Generate QR
+    const qrContainer = document.getElementById('meetQR');
+    qrContainer.innerHTML = '';
+    const qrCanvas = document.createElement('canvas');
+    qrContainer.appendChild(qrCanvas);
+    QRCode.toCanvas(qrCanvas, `https://what3words.com/${currentW3WAddress}`, {
+        width: 134, margin: 0,
+        color: { dark: '#e11d48', light: '#ffffff' }
+    });
+
+    document.getElementById('meetCardPreview').classList.remove('hidden');
+    document.getElementById('meetCardPreview').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+async function shareSpot() {
+    if (!currentW3WAddress) return;
+    const url = `https://what3words.com/${currentW3WAddress}`;
+    const text = `${currentUseCase.icon} ${currentUseCase.title}: ///${currentW3WAddress}\n\n${url}`;
+    const shareData = { title: currentUseCase.title, text, url };
+    if (navigator.share && navigator.canShare && navigator.canShare(shareData)) {
+        try { await navigator.share(shareData); return; } catch(e) { if (e.name === 'AbortError') return; }
+    }
+    navigator.clipboard.writeText(text).then(() => alert('Copied to clipboard!')).catch(() => alert('Tap and copy: ' + url));
+}
+
+function copyW3WLink() {
+    if (!currentW3WAddress) return;
+    const url = `https://what3words.com/${currentW3WAddress}`;
+    navigator.clipboard.writeText(url).then(() => alert('Link copied!')).catch(() => alert(url));
+}
+
+function resetMeetCard() {
+    currentW3WAddress = '';
+    document.getElementById('w3wInput').value = '';
+    document.getElementById('meetEventName').value = '';
+    document.getElementById('meetLocationLabel').value = '';
+    document.getElementById('meetCardPreview').classList.add('hidden');
+    document.getElementById('geoStatus').classList.add('hidden');
+}
+
+// Close w3w suggestions when clicking outside
+document.addEventListener('click', (e) => {
+    if (!e.target.closest('#w3wInput') && !e.target.closest('#w3wSuggestions')) {
+        document.getElementById('w3wSuggestions')?.classList.add('hidden');
+    }
+});
+</script>
+
+</body>
+</html>

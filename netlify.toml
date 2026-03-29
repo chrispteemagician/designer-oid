@@ -1,0 +1,15 @@
+[build]
+  command = "npm install @google/generative-ai"
+  functions = "netlify/functions"
+  publish = "."
+
+[build.environment]
+  SECRETS_SCAN_OMIT_KEYS = "SUPABASE_API_KEY"
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+[functions]
+  node_bundler = "esbuild"
