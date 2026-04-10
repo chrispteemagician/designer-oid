@@ -426,6 +426,7 @@
 </div>
 
 <!-- ==================== NAVIGATION PILL ==================== -->
+<div id="godModeIndicator" class="hidden text-center py-1 text-xs font-bold tracking-widest fixed top-0 left-0 right-0 z-[200]" style="background:#0a0a0a;color:#ffd700;">⚡ GOD MODE ACTIVE</div>
 <nav class="nav-pill" id="navPill">
     <button class="nav-dot active" onclick="goTo('pageHome')" title="Home">👗</button>
     <button class="nav-dot" onclick="goTo('pageLearn')" title="Learn">📖</button>
@@ -448,7 +449,7 @@
 <section id="pageHome" class="snap-section relative overflow-hidden">
     <!-- Hero -->
     <div class="relative py-16 px-4 text-center" style="background: linear-gradient(180deg, #0a0a0a 0%, #141414 100%);">
-        <div class="hero-emoji text-7xl mb-4">👗</div>
+        <div class="hero-emoji text-7xl mb-4" onclick="handleLogoTap()" style="cursor:pointer">👗</div>
         <h1 class="text-5xl sm:text-6xl font-black tracking-tight text-cream mb-2" style="line-height:1.1;">Designer-Oid</h1>
         <div class="rose-line"></div>
         <p class="text-lg font-semibold text-rose tracking-widest uppercase mt-3">The Authentication Atelier</p>
@@ -471,14 +472,14 @@
     <!-- Free to use banner -->
     <div class="text-center py-3 px-4 border-y border-rose/10" style="background: rgba(232, 180, 184, 0.03);">
         <p class="text-sm text-cream/70">
-            <strong class="text-cream">Free forever.</strong> Join the <a href="https://feelfamous.com" class="text-rose font-bold hover:underline">FeelFamous Family</a> to unlock <span class="bg-gold text-deep px-2 py-0.5 rounded font-bold text-xs">PRO</span> features across <strong class="text-cream">ALL</strong> -Oid apps.
+            <strong class="text-cream">Free forever.</strong> Join the <a href="https://feelfamous.co.uk" class="text-rose font-bold hover:underline">FeelFamous Family</a> to unlock <span class="bg-gold text-deep px-2 py-0.5 rounded font-bold text-xs">PRO</span> features across <strong class="text-cream">ALL</strong> -Oid apps.
         </p>
     </div>
 
     <!-- Action buttons -->
     <div class="py-4 px-4" style="background: #141414;">
         <div class="max-w-3xl mx-auto flex flex-wrap gap-3 justify-center">
-            <a href="https://feelfamous.com/founders.html" class="btn-rose text-sm">Join The Village</a>
+            <a href="https://feelfamous.co.uk/founders.html" class="btn-rose text-sm">Join The Village</a>
             <a href="mailto:chris@chrisptee.co.uk" class="btn-outline text-sm">Email</a>
             <a href="https://wa.me/447976884254" class="btn-outline text-sm" style="border-color: rgba(74,222,128,0.4); color: #4ade80;">WhatsApp</a>
             <a href="https://www.patreon.com/chrisptee" target="_blank" class="btn-gold text-sm">Join on Patreon</a>
@@ -615,7 +616,7 @@
             </div>
 
             <!-- Sign in prompt -->
-            <div id="signInPrompt" class="glass-card text-center">
+            <div id="signInPrompt" class="hidden glass-card text-center">
                 <p class="text-cream/80 font-semibold mb-4">Sign in with Patreon to earn kudos, track authentications, and unlock village features!</p>
                 <button id="patreonSignInBtn" onclick="signInWithPatreon()" class="w-full btn-rose" style="min-height:52px; font-size:1.05rem;">Sign in with Patreon</button>
                 <div id="patreonStatus" class="hidden mt-3"></div>
@@ -1171,7 +1172,7 @@
             <p class="text-3xl mb-2">🌱</p>
             <h3 class="text-xl font-bold text-cream mb-2">Start Your Own Village</h3>
             <p class="text-cream/50 text-sm mb-4 leading-relaxed">Got a niche? Books, tools, plants, ceramics — if people collect it, it deserves a village. Same AI brain, your community's head. Built in a day.</p>
-            <a href="https://feelfamous.com" class="btn-rose inline-block text-sm">Talk to the FeelFamous Team →</a>
+            <a href="https://feelfamous.co.uk" class="btn-rose inline-block text-sm">Talk to the FeelFamous Team →</a>
         </div>
 
         <!-- Village Sign In -->
@@ -1235,7 +1236,7 @@
                 <span class="text-cream/20">|</span>
                 <a href="https://chrisptee.co.uk" class="text-cream/40 hover:text-cream transition">Chris P Tee</a>
                 <span class="text-cream/20">|</span>
-                <a href="https://feelfamous.com" class="text-cream/40 hover:text-cream transition">FeelFamous</a>
+                <a href="https://feelfamous.co.uk" class="text-cream/40 hover:text-cream transition">FeelFamous</a>
                 <span class="text-cream/20">|</span>
                 <a href="https://strangemole.co.uk" class="text-cream/40 hover:text-cream transition">Strange Mole</a>
                 <span class="text-cream/20">|</span>
@@ -1251,7 +1252,7 @@
         <h3 class="text-lg font-bold text-rose tracking-wide mb-3">WE ALL STAND ON THE SHOULDERS OF GIANTS</h3>
         <p class="text-sm text-cream/40 mb-6">Coco Chanel &middot; Christian Dior &middot; Yves Saint Laurent &middot; Vivienne Westwood &middot; Alexander McQueen &middot; Hubert de Givenchy &middot; Cristobal Balenciaga &middot; Rei Kawakubo</p>
         <p class="text-xs text-cream/30 mb-2">
-            Part of the <a href="https://feelfamous.com" class="text-rose font-semibold hover:underline">FeelFamous</a> Ecosystem
+            Part of the <a href="https://feelfamous.co.uk" class="text-rose font-semibold hover:underline">FeelFamous</a> Ecosystem
         </p>
         <p class="font-caveat text-xl text-gold/60 mb-4">World Domination Through Kindness.</p>
         <p class="text-xs text-cream/20">
@@ -1329,6 +1330,7 @@ const patienceMessages = [
 
 // ==================== INITIALIZATION ====================
 window.onload = async function() {
+    checkStoredGodMode();
     // UI init first — keeps page visible even if Supabase throws
     initSectionReveal();
     initNavHighlight();
@@ -2183,6 +2185,32 @@ document.addEventListener('click', (e) => {
         document.getElementById('w3wSuggestions')?.classList.add('hidden');
     }
 });
+
+// ===== GOD MODE =====
+let isAdmin = false;
+let logoTapCount = 0, logoTapTimer = null;
+function handleLogoTap() {
+    logoTapCount++;
+    clearTimeout(logoTapTimer);
+    logoTapTimer = setTimeout(() => { logoTapCount = 0; }, 800);
+    if (logoTapCount >= 3) {
+        logoTapCount = 0;
+        if (isAdmin) { alert('God Mode already active ✓'); return; }
+        const input = prompt('Enter passcode:');
+        if (input === 'Z0d14cM4nTr1n1tyxx') {
+            localStorage.setItem('designer_oid_god_mode', '1');
+            activateGodMode();
+            alert('God Mode activated 🔥');
+        }
+    }
+}
+function activateGodMode() {
+    isAdmin = true;
+    document.getElementById('godModeIndicator')?.classList.remove('hidden');
+}
+function checkStoredGodMode() {
+    if (localStorage.getItem('designer_oid_god_mode') === '1') activateGodMode();
+}
 </script>
 
 </body>
